@@ -95,10 +95,14 @@ class SearchAlgorithms:
                 j -= 1
             if j < 0:
                 occurrences.append(s)
-                s += (m - bad_char.get(text[s + m], m) if s + m < n else 1)
+                if s + m < n:
+                    proposed_shift = m - bad_char.get(text[s + m], m)
+                    s += max(1, proposed_shift)
+                else:
+                    s += 1
             else:
-                s += max(1, j - bad_char.get(text[s + j], -1))
-
+                shift_on_mismatch = j - bad_char.get(text[s + j], -1)
+                s += max(1, shift_on_mismatch)
         return occurrences
 
     def levenshtein_distance(self, s1: str, s2: str) -> int:
