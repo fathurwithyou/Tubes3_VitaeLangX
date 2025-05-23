@@ -19,7 +19,7 @@ def main():
     keywords_kmp = ["python", "react", "sql"]
     print(f"\n--- Searching for {keywords_kmp} using KMP (Top 5 Matches) ---")
     search_results_kmp = backend_manager.search_cvs(
-        keywords_kmp, "KMP", top_n_matches=5, fuzzy_threshold=0.7)
+        keywords_kmp, "KMP", top_n_matches=5, fuzzy_threshold=80)
     print(
         f"Exact Match Search Time: {search_results_kmp['exact_match_time_ms']:.2f} ms")
     print(
@@ -37,7 +37,7 @@ def main():
     keywords_bm = ["java", "spring boot", "database"]
     print(f"\n--- Searching for {keywords_bm} using BM (Top 3 Matches) ---")
     search_results_bm = backend_manager.search_cvs(
-        keywords_bm, "BM", top_n_matches=3, fuzzy_threshold=0.6)
+        keywords_bm, "BM", top_n_matches=3, fuzzy_threshold=80)
     print(
         f"Exact Match Search Time: {search_results_bm['exact_match_time_ms']:.2f} ms")
     print(

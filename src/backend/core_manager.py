@@ -1,39 +1,67 @@
+
 import os
+import re
 from backend.database_manager import DatabaseManager
 from backend.cv_processor import CVProcessor
-from backend.search_algorithms import SearchAlgorithms
 from backend.regex_extractor import RegexExtractor
 from backend.models import ApplicantProfile, ApplicationDetail
 from backend.utils import Utils
-import re
+from backend.seeder import Seeder
+from backend.services.search_service import SearchService
 
 
 class BackendManager:
     """
     Orchestrates all backend operations for the ATS.
-    Manages database, CV processing, search algorithms, and regex extraction.
+    Manages database, CV processing, search algorithms (via SearchService),
+    and regex extraction.
     """
 
     def __init__(self, db_host='localhost', db_user='root', db_password='', db_name='ats_db'):
         self.db_manager = DatabaseManager(
             host=db_host, user=db_user, password=db_password, db=db_name)
         self.cv_processor = CVProcessor()
-        self.search_algos = SearchAlgorithms()
+        self.search_service = SearchService()
         self.regex_extractor = RegexExtractor()
         self.in_memory_cv_texts = {}
         self.applicant_profiles_cache = {}
 
-    def initialize_backend(self, data_directory: str = 'data/'):
-        """Initializes database, creates tables, and seeds data if necessary."""
+    def initialize_backend(self, data_directory: str = '../data/'):
+        """
+        Initializes the application backend.
+        Ensures DB connection, table creation, and seeds data via Seeder if necessary.
+        """
+        print("BackendManager: Initializing backend...")
+
         self.db_manager.connect()
+        if not self.db_manager.connection:
+            print(
+                "BackendManager: CRITICAL - DB connection failed. Further initialization stopped.")
+            return
+
         self.db_manager.create_tables()
+
         if not self.db_manager.get_all_application_details():
-            self.db_manager.seed_data(data_directory)
+            print("BackendManager: No application details found. Initiating database preparation and seeding process via Seeder...")
+            seeder_instance = Seeder(self.db_manager)
+            success = seeder_instance.prepare_database_and_seed(
+                data_directory=data_directory)
+
+            if success:
+                print(
+                    "BackendManager: Seeder successfully prepared database and seeded data.")
+            else:
+                print(
+                    "BackendManager: Seeder reported an issue during database preparation or seeding.")
+        else:
+            print("BackendManager: Application details found. Assuming database is prepared and seeded. Skipping Seeder run.")
+
         self.load_cv_data_to_memory()
+        print("BackendManager: Backend initialization complete.")
 
     def load_cv_data_to_memory(self):
         """
-        Loads all relevant CV texts into memory for efficient searching. [cite: 16, 25]
+        Loads all relevant CV texts into memory for efficient searching.
         This should happen once on application startup or when new CVs are added.
         """
         application_details = self.db_manager.get_all_application_details()
@@ -44,76 +72,94 @@ class BackendManager:
             cv_paths)
         print("All relevant CV data loaded into memory.")
 
-    def search_cvs(self, keywords: list[str], algorithm: str, top_n_matches: int = 10, fuzzy_threshold: float = None) -> dict:
+    def search_cvs(self, keywords: list[str], algorithm: str, top_n_matches: int = 10, fuzzy_threshold: float = 80) -> dict:
         """
-        Performs CV search based on keywords using the specified algorithm.
+        Performs CV search based on keywords using the specified algorithm via SearchService.
         Returns structured results including exact and fuzzy matches.
         """
         results = []
-        exact_match_time = 0
-        fuzzy_match_time = 0
+        total_exact_match_time_ms = 0
+        total_fuzzy_match_time_ms = 0
 
         keywords_lower = [k.lower() for k in keywords]
-
         exact_matches = {}
-        print(
-            f"Starting exact matching with {algorithm} for keywords: {keywords}")
-        exact_search_func = self.search_algos.kmp_search if algorithm.lower(
-        ) == 'kmp' else self.search_algos.boyer_moore_search
+
         if algorithm.lower() == 'aho-corasick':
-
-            multi_pattern_results, exact_match_time = Utils.time_function(
-                self.search_algos.aho_corasick_search,
-
-                list(self.in_memory_cv_texts.values())[
-                    0] if self.in_memory_cv_texts else "",
-                keywords_lower
-            )
-
+            print(
+                f"Starting exact matching with Aho-Corasick for keywords: {keywords_lower}")
             for cv_path, text in self.in_memory_cv_texts.items():
-                cv_matched_keywords = {}
-                total_occurrences = 0
-                for keyword in keywords_lower:
 
-                    occurrences = exact_search_func(text.lower(), keyword)
-                    if occurrences:
-                        cv_matched_keywords[keyword] = len(occurrences)
-                        total_occurrences += len(occurrences)
-                if total_occurrences > 0:
+                ac_results_for_cv, time_taken = Utils.time_function(
+                    self.search_service.search_aho_corasick,
+                    text.lower(),
+                    keywords_lower
+                )
+                total_exact_match_time_ms += time_taken
+                current_cv_matched_keywords = {}
+                current_total_occurrences = 0
+                if ac_results_for_cv:
+                    for keyword_found, occurrences in ac_results_for_cv.items():
+                        if occurrences:
+                            current_cv_matched_keywords[keyword_found] = len(
+                                occurrences)
+                            current_total_occurrences += len(occurrences)
+
+                if current_total_occurrences > 0:
                     exact_matches[cv_path] = {
-                        'matched_keywords': cv_matched_keywords,
-                        'total_occurrences': total_occurrences
+                        'matched_keywords': current_cv_matched_keywords,
+                        'total_occurrences': current_total_occurrences
                     }
         else:
-            for cv_path, text in self.in_memory_cv_texts.items():
-                cv_matched_keywords = {}
-                total_occurrences = 0
+            exact_search_func = None
+            algo_name_for_print = ""
+            if algorithm.lower() == 'kmp':
+                algo_name_for_print = "KMP"
+                exact_search_func = self.search_service.search_kmp
+            elif algorithm.lower() == 'boyer-moore':
+                algo_name_for_print = "Boyer-Moore"
+                exact_search_func = self.search_service.search_boyer_moore
+            else:
+                print(
+                    f"Warning: Unknown exact match algorithm '{algorithm}'. Defaulting to KMP.")
+                algo_name_for_print = "KMP (defaulted)"
+                exact_search_func = self.search_service.search_kmp
 
-                current_cv_exact_matches = {}
-                current_cv_exact_time = 0
+            print(
+                f"Starting exact matching with {algo_name_for_print} for keywords: {keywords_lower}")
+
+            for cv_path, text in self.in_memory_cv_texts.items():
+                current_cv_matched_keywords = {}
+                current_total_occurrences = 0
+                current_cv_loop_time = 0
 
                 for keyword in keywords_lower:
                     occurrences, time_taken = Utils.time_function(
-
                         exact_search_func, text.lower(), keyword)
-                    current_cv_exact_time += time_taken
+                    current_cv_loop_time += time_taken
                     if occurrences:
-                        current_cv_exact_matches[keyword] = len(occurrences)
-                        total_occurrences += len(occurrences)
+                        current_cv_matched_keywords[keyword] = len(occurrences)
+                        current_total_occurrences += len(occurrences)
 
-                if total_occurrences > 0:
+                if current_total_occurrences > 0:
                     exact_matches[cv_path] = {
-                        'matched_keywords': current_cv_exact_matches,
-                        'total_occurrences': total_occurrences
+                        'matched_keywords': current_cv_matched_keywords,
+                        'total_occurrences': current_total_occurrences
                     }
-                exact_match_time += current_cv_exact_time
+                total_exact_match_time_ms += current_cv_loop_time
 
-        sorted_exact_matches = sorted(exact_matches.items(
-        ), key=lambda item: item[1]['total_occurrences'], reverse=True)
+        sorted_exact_matches = sorted(exact_matches.items(),
+                                      key=lambda item: item[1]['total_occurrences'], reverse=True)
 
         unmatched_keywords = []
         for keyword in keywords:
-            if not any(keyword.lower() in details['matched_keywords'] for cv_path, details in sorted_exact_matches):
+
+            keyword_l = keyword.lower()
+            found_in_exact = False
+            for _, details in sorted_exact_matches:
+                if keyword_l in details['matched_keywords']:
+                    found_in_exact = True
+                    break
+            if not found_in_exact:
                 unmatched_keywords.append(keyword)
 
         fuzzy_matches = {}
@@ -124,40 +170,41 @@ class BackendManager:
             for cv_path, text in self.in_memory_cv_texts.items():
                 cv_fuzzy_keywords = {}
                 highest_cv_similarity = 0.0
-
-                current_cv_fuzzy_matches = {}
-                current_cv_fuzzy_time = 0
+                current_cv_loop_fuzzy_time = 0
 
                 cv_words = re.findall(r'\b\w+\b', text.lower())
 
                 for um_keyword in unmatched_keywords:
-                    best_similarity = 0.0
+                    best_similarity_for_keyword = 0.0
                     for cv_word in cv_words:
+
                         similarity_score, time_taken = Utils.time_function(
-                            self.search_algos.calculate_similarity_percentage, um_keyword.lower(), cv_word)
-                        current_cv_fuzzy_time += time_taken
-                        if similarity_score >= fuzzy_threshold and similarity_score > best_similarity:
-                            best_similarity = similarity_score
-                    if best_similarity > 0:
-                        cv_fuzzy_keywords[um_keyword] = best_similarity
-                        if best_similarity > highest_cv_similarity:
-                            highest_cv_similarity = best_similarity
+                            self.search_service.get_similarity_percentage,
+                            um_keyword.lower(), cv_word
+                        )
+                        current_cv_loop_fuzzy_time += time_taken
+                        if similarity_score >= fuzzy_threshold and similarity_score > best_similarity_for_keyword:
+                            best_similarity_for_keyword = similarity_score
+
+                    if best_similarity_for_keyword > 0:
+                        cv_fuzzy_keywords[um_keyword] = best_similarity_for_keyword
+                        if best_similarity_for_keyword > highest_cv_similarity:
+                            highest_cv_similarity = best_similarity_for_keyword
 
                 if highest_cv_similarity > 0:
                     fuzzy_matches[cv_path] = {
                         'fuzzy_matched_keywords': cv_fuzzy_keywords,
                         'highest_similarity': highest_cv_similarity
                     }
-                fuzzy_match_time += current_cv_fuzzy_time
+                total_fuzzy_match_time_ms += current_cv_loop_fuzzy_time
 
         final_results = []
         processed_cv_paths = set()
 
         for cv_path, details in sorted_exact_matches:
-
-            application_detail = self.db_manager.get_all_application_details()
+            application_detail_list = self.db_manager.get_all_application_details()
             app_detail = next(
-                (ad for ad in application_detail if ad.cv_path == cv_path), None)
+                (ad for ad in application_detail_list if ad.cv_path == cv_path), None)
 
             if app_detail:
                 profile = self.db_manager.get_applicant_profile_by_id(
@@ -174,14 +221,14 @@ class BackendManager:
                     })
                     processed_cv_paths.add(cv_path)
 
-        sorted_fuzzy_matches = sorted(fuzzy_matches.items(
-        ), key=lambda item: item[1]['highest_similarity'], reverse=True)
+        sorted_fuzzy_matches = sorted(fuzzy_matches.items(),
+                                      key=lambda item: item[1]['highest_similarity'], reverse=True)
 
         for cv_path, details in sorted_fuzzy_matches:
             if cv_path not in processed_cv_paths:
-                application_detail = self.db_manager.get_all_application_details()
+                application_detail_list = self.db_manager.get_all_application_details()
                 app_detail = next(
-                    (ad for ad in application_detail if ad.cv_path == cv_path), None)
+                    (ad for ad in application_detail_list if ad.cv_path == cv_path), None)
                 if app_detail:
                     profile = self.db_manager.get_applicant_profile_by_id(
                         app_detail.applicant_id)
@@ -201,27 +248,24 @@ class BackendManager:
 
         return {
             "results": final_results,
-            "exact_match_time_ms": exact_match_time,
-            "fuzzy_match_time_ms": fuzzy_match_time if unmatched_keywords else 0
+            "exact_match_time_ms": total_exact_match_time_ms,
+            "fuzzy_match_time_ms": total_fuzzy_match_time_ms if unmatched_keywords else 0
         }
 
     def get_cv_summary(self, applicant_id: int) -> dict:
-        """
-        Extracts and returns a detailed summary of a CV for a given applicant ID. [cite: 75, 77, 78]
-        This involves fetching the CV path, extracting text, and applying Regex.
-        """
+
         profile = self.db_manager.get_applicant_profile_by_id(applicant_id)
         if not profile:
             return {"error": "Applicant not found."}
 
-        application_details = self.db_manager._execute_query(
+        application_details_row = self.db_manager._execute_query(
             "SELECT * FROM ApplicationDetail WHERE applicant_id = %s ORDER BY detail_id DESC LIMIT 1",
             (applicant_id,), fetch_one=True
         )
-        if not application_details:
+        if not application_details_row:
             return {"error": "CV details not found for this applicant."}
 
-        cv_path = application_details['cv_path']
+        cv_path = application_details_row['cv_path']
         if not cv_path or not os.path.exists(cv_path):
             return {"error": f"CV file not found at {cv_path}"}
 
@@ -232,7 +276,6 @@ class BackendManager:
         summary = {
             "applicant_info": {
                 "name": f"{profile.first_name} {profile.last_name}".strip(),
-
                 "birthdate": str(profile.date_of_birth) if profile.date_of_birth else "N/A",
                 "address": profile.address,
                 "phone_number": profile.phone_number,
@@ -247,13 +290,12 @@ class BackendManager:
         return summary
 
     def get_raw_cv_path(self, applicant_id: int) -> str:
-        """Returns the path to the raw CV file for viewing."""
-        application_details = self.db_manager._execute_query(
+        application_details_row = self.db_manager._execute_query(
             "SELECT cv_path FROM ApplicationDetail WHERE applicant_id = %s ORDER BY detail_id DESC LIMIT 1",
             (applicant_id,), fetch_one=True
         )
-        if application_details:
-            return application_details['cv_path']
+        if application_details_row:
+            return application_details_row['cv_path']
         return None
 
     def shutdown_backend(self):
