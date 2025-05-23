@@ -202,7 +202,6 @@ class BackendManager:
         return {
             "results": final_results,
             "exact_match_time_ms": exact_match_time,
-
             "fuzzy_match_time_ms": fuzzy_match_time if unmatched_keywords else 0
         }
 
