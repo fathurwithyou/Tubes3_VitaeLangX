@@ -17,7 +17,10 @@ class DatabaseManager:
         self.db = db
 
     def connect(self):
-        """Establishes a connection to the database."""
+        """
+        Establishes a connection to the database.
+        If the database does not exist, it attempts to create it.
+        """
         try:
             self.connection = pymysql.connect(
                 host=self.host,
@@ -26,9 +29,53 @@ class DatabaseManager:
                 database=self.db,
                 cursorclass=pymysql.cursors.DictCursor
             )
-            print("Database connected successfully.")
-        except pymysql.Error as e:
-            print(f"Error connecting to database: {e}")
+            print(f"Database '{self.db}' connected successfully.")
+        except pymysql.err.OperationalError as e:
+            if e.args[0] == 1049:
+                print(
+                    f"Database '{self.db}' not found. Attempting to create it...")
+                try:
+                    conn_server = pymysql.connect(
+                        host=self.host,
+                        user=self.user,
+                        password=self.password,
+                        cursorclass=pymysql.cursors.DictCursor
+                    )
+                    with conn_server.cursor() as cursor:
+
+                        cursor.execute(
+                            f"CREATE DATABASE IF NOT EXISTS `{self.db}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+                    conn_server.commit()
+                    conn_server.close()
+                    print(f"Database '{self.db}' created successfully.")
+
+                    self.connection = pymysql.connect(
+                        host=self.host,
+                        user=self.user,
+                        password=self.password,
+                        database=self.db,
+                        cursorclass=pymysql.cursors.DictCursor
+                    )
+                    print(
+                        f"Database '{self.db}' connected successfully after creation.")
+                except pymysql.Error as ce:
+                    print(f"Error creating database '{self.db}': {ce}")
+                    self.connection = None
+                except Exception as ex_creation:
+                    print(
+                        f"An unexpected error occurred during database creation: {ex_creation}")
+                    self.connection = None
+            else:
+                print(
+                    f"Error connecting to database '{self.db}' (OperationalError other than Unknown DB): {e}")
+                self.connection = None
+        except pymysql.Error as e_pymysql:
+            print(
+                f"A PyMySQL error occurred during connection attempt: {e_pymysql}")
+            self.connection = None
+        except Exception as ex_general:
+            print(
+                f"An unexpected error occurred during connection: {ex_general}")
             self.connection = None
 
     def close(self):
@@ -57,7 +104,13 @@ class DatabaseManager:
         except pymysql.Error as e:
             print(f"Database query error: {e}")
             if commit:
-                self.connection.rollback()
+                try:
+                    self.connection.rollback()
+                except pymysql.Error as rb_err:
+                    print(f"Error during rollback: {rb_err}")
+            return None
+        except Exception as ex:
+            print(f"An unexpected error occurred during query execution: {ex}")
             return None
 
     def create_tables(self):
@@ -70,7 +123,7 @@ class DatabaseManager:
                 last_name VARCHAR(50) DEFAULT NULL,
                 date_of_birth DATE DEFAULT NULL,
                 address VARCHAR(255) DEFAULT NULL,
-                phone_number VARCHAR(20) DEFAULT NULL
+                phone_number VARCHAR(20) DEFAULT NULL 
             )
             """,
             """
@@ -108,7 +161,7 @@ class DatabaseManager:
 
     def get_all_application_details(self) -> list[ApplicationDetail]:
         """Retrieves all application details."""
-        query = "SELECT * FROM ApplicationDetail LIMIT 10"  # for testing
+        query = "SELECT * FROM ApplicationDetail LIMIT 10"
         rows = self._execute_query(query, fetch_all=True)
         if rows:
             return [ApplicationDetail(**row) for row in rows]
@@ -122,12 +175,3 @@ class DatabaseManager:
         if row:
             return ApplicantProfile(**row)
         return None
-
-    def seed_data(self, data_directory: str = 'data/'):
-        """
-        Seeds the database with simulation data. This will be replaced by official seeding
-        closer to the deadline.
-        This is a placeholder for generating dummy data and ensuring CV paths exist.
-        """
-        print(f"Attempting to seed data from '{data_directory}'...")
-        print("Data seeding complete (simulation data).")
