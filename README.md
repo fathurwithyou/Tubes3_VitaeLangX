@@ -65,4 +65,4 @@ This project implements a backend for an Applicant Tracking System, focusing on 
 | :---- | :-- |
 | Adinda Putri | 13523071 |
 | Muhammad Fathur Rizky | 13523105 |
-| Ahmad Wicaksono | 13523071 |
+| Ahmad Wicaksono | 13523121 |
