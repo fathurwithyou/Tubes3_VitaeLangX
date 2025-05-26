@@ -1,5 +1,5 @@
 import os
-from backend.core_manager import BackendManager
+from backend import BackendManager
 
 
 def main():
@@ -7,8 +7,6 @@ def main():
 
     data_dir = os.path.join(os.path.dirname(__file__), '../data')
     os.makedirs(data_dir, exist_ok=True)
-    # os.makedirs(os.path.join(data_dir, 'HR'), exist_ok=True)
-    # os.makedirs(os.path.join(data_dir, 'Sales'), exist_ok=True)
 
     backend_manager = BackendManager()
     backend_manager.initialize_backend(data_directory=data_dir)
@@ -77,6 +75,7 @@ def main():
 
     backend_manager.shutdown_backend()
     print("\nBackend shut down.")
+
 
 if __name__ == "__main__":
     main()
