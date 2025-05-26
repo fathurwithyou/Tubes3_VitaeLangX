@@ -13,7 +13,7 @@ class ExactStringMatchingAlgorithm(BaseSearchAlgorithm):
         super().__init__()
 
     @abstractmethod
-    def search(self, text: str, pattern: str) -> list[int]:
+    def search(self, text: str, patterns: str) -> list[int]:
         """
         Metode abstrak untuk mencari semua kemunculan pattern (string) dalam text (string).
 

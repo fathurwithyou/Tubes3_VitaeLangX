@@ -11,7 +11,7 @@ class BaseSearchAlgorithm(ABC):
         super().__init__()
 
     @abstractmethod
-    def search(self, text: str, pattern: any) -> any:
+    def search(self, text: str, patterns: str | list[str]) -> list[int] | dict[str, list[int]]:
         """
         Metode pencarian umum. Tipe 'pattern' dan 'return' bisa lebih spesifik
         di kelas turunan.

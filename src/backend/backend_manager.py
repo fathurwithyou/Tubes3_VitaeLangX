@@ -5,9 +5,9 @@ from backend.database_manager import DatabaseManager
 from backend.cv_processor import CVProcessor
 from backend.regex_extractor import RegexExtractor
 from backend.models import ApplicantProfile, ApplicationDetail
-from backend.utils import Utils
+from backend.utils.utils import Utils
 from backend.seeder import Seeder
-from backend.services.search_service import SearchService
+from backend.services import SearchService
 
 
 class BackendManager:

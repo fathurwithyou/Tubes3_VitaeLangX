@@ -1,8 +1,4 @@
-from backend.algorithms.exact_match.kmp import KMP
-from backend.algorithms.exact_match.boyer_moore import BoyerMoore
-from backend.algorithms.multi_pattern.aho_corasick import AhoCorasick
-from backend.algorithms.fuzzy_match.levenshtein import Levenshtein
-
+from backend.algorithms import KMP, BoyerMoore, AhoCorasick, Levenshtein
 
 class SearchService:
     """
