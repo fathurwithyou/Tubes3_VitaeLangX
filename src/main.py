@@ -1,12 +1,16 @@
 import os
-from backend import BackendManager
-
+from backend import BackendManager, Settings
 
 def main():
     print("Initializing ATS Backend...")
 
     data_dir = os.path.join(os.path.dirname(__file__), '../data')
     os.makedirs(data_dir, exist_ok=True)
+    
+    print(f"Settings.FUZZY_THRESHOLD = {Settings.FUZZY_THRESHOLD}")
+    print(f"Type: {type(Settings.FUZZY_THRESHOLD)}")
+    print(f"Settings.TOP_N_MATCHES = {Settings.TOP_N_MATCHES}")
+    print(f"Type: {type(Settings.TOP_N_MATCHES)}")
 
     backend_manager = BackendManager()
     backend_manager.initialize_backend(data_directory=data_dir)
@@ -17,7 +21,7 @@ def main():
     keywords_kmp = ["java", "spring boot", "database"]
     print(f"\n--- Searching for {keywords_kmp} using KMP (Top 5 Matches) ---")
     search_results_kmp = backend_manager.search_cvs(
-        keywords_kmp, "KMP", top_n_matches=5, fuzzy_threshold=80)
+        keywords_kmp, "KMP", top_n_matches=Settings.TOP_N_MATCHES, fuzzy_threshold=Settings.FUZZY_THRESHOLD)
     print(
         f"Exact Match Search Time: {search_results_kmp['exact_match_time_ms']:.2f} ms")
     print(
@@ -35,7 +39,7 @@ def main():
     keywords_bm = ["java", "spring boot", "database"]
     print(f"\n--- Searching for {keywords_bm} using BM (Top 5 Matches) ---")
     search_results_bm = backend_manager.search_cvs(
-        keywords_bm, "boyer-moore", top_n_matches=5, fuzzy_threshold=80)
+        keywords_bm, "boyer-moore", top_n_matches=Settings.TOP_N_MATCHES, fuzzy_threshold=Settings.FUZZY_THRESHOLD)
     print(
         f"Exact Match Search Time: {search_results_bm['exact_match_time_ms']:.2f} ms")
     print(
@@ -53,7 +57,7 @@ def main():
     keywords_ac = ["java", "spring boot", "database"]
     print(f"\n--- Searching for {keywords_ac} using Aho-Corasick (Top 5 Matches) ---")
     search_results_ac = backend_manager.search_cvs(
-        keywords_ac, "Aho-Corasick", top_n_matches=5, fuzzy_threshold=80)
+        keywords_ac, "Aho-Corasick", top_n_matches=Settings.TOP_N_MATCHES, fuzzy_threshold=Settings.FUZZY_THRESHOLD)
     print(
         f"Exact Match Search Time: {search_results_ac['exact_match_time_ms']:.2f} ms")
     print(
