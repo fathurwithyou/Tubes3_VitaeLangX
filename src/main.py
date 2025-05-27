@@ -14,7 +14,7 @@ def main():
     print("\nBackend initialized. You can now integrate with a frontend.")
     print("Example usage (simulated from frontend interaction):")
 
-    keywords_kmp = ["python", "react", "sql"]
+    keywords_kmp = ["java", "spring boot", "database"]
     print(f"\n--- Searching for {keywords_kmp} using KMP (Top 5 Matches) ---")
     search_results_kmp = backend_manager.search_cvs(
         keywords_kmp, "KMP", top_n_matches=5, fuzzy_threshold=80)
@@ -33,9 +33,9 @@ def main():
                 f"  Fuzzy Keywords (Highest Similarity: {result['highest_fuzzy_similarity']:.2f}%): {result['fuzzy_keywords']}")
 
     keywords_bm = ["java", "spring boot", "database"]
-    print(f"\n--- Searching for {keywords_bm} using BM (Top 3 Matches) ---")
+    print(f"\n--- Searching for {keywords_bm} using BM (Top 5 Matches) ---")
     search_results_bm = backend_manager.search_cvs(
-        keywords_bm, "BM", top_n_matches=3, fuzzy_threshold=80)
+        keywords_bm, "boyer-moore", top_n_matches=5, fuzzy_threshold=80)
     print(
         f"Exact Match Search Time: {search_results_bm['exact_match_time_ms']:.2f} ms")
     print(
@@ -50,6 +50,24 @@ def main():
             print(
                 f"  Fuzzy Keywords (Highest Similarity: {result['highest_fuzzy_similarity']:.2f}%): {result['fuzzy_keywords']}")
 
+    keywords_ac = ["java", "spring boot", "database"]
+    print(f"\n--- Searching for {keywords_ac} using Aho-Corasick (Top 5 Matches) ---")
+    search_results_ac = backend_manager.search_cvs(
+        keywords_ac, "Aho-Corasick", top_n_matches=5, fuzzy_threshold=80)
+    print(
+        f"Exact Match Search Time: {search_results_ac['exact_match_time_ms']:.2f} ms")
+    print(
+        f"Fuzzy Match Search Time: {search_results_ac['fuzzy_match_time_ms']:.2f} ms")
+    for i, result in enumerate(search_results_ac['results']):
+        print(
+            f"Match {i+1}: {result['name']} (CV: {os.path.basename(result['cv_path'])})")
+        if result['matched_keywords']:
+            print(
+                f"  Exact Keywords ({result['total_occurrences']} total occurrences): {result['matched_keywords']}")
+        if result['fuzzy_keywords']:
+            print(
+                f"  Fuzzy Keywords (Highest Similarity: {result['highest_fuzzy_similarity']:.2f}%): {result['fuzzy_keywords']}")
+            
     summary = backend_manager.get_cv_summary(4)
     if "error" not in summary:
         print(f"Name: {summary['applicant_info']['name']}")
