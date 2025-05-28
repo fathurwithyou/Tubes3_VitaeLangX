@@ -138,6 +138,4 @@ class HomePage(ctk.CTkFrame):
         button.bind("<Leave>", on_leave)
     
     def start_search(self):
-        print("Starting search...")
-        # TODO: Navigate to search page
-        # self.navigate_callback("search")
+        self.navigate_callback("opening")
