@@ -29,7 +29,7 @@ This project implements a backend for an Applicant Tracking System, focusing on 
 1.  **Clone the repository:**
 
     ```bash
-    git clone <repository_url>
+    git clone https://github.com/fathurwithyou/Tubes3_VitaeLangX.git
     cd src
     ```
 
