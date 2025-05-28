@@ -274,14 +274,8 @@ class BackendManager:
             return {"error": "Could not extract text from CV."}
 
         summary = {
-            "applicant_info": {
-                "name": f"{profile.first_name} {profile.last_name}".strip(),
-                "birthdate": str(profile.date_of_birth) if profile.date_of_birth else "N/A",
-                "address": profile.address,
-                "phone_number": profile.phone_number,
-            },
+            "applicant_profile": self._get_applicant_profile(applicant_id),
             "extracted_info": {
-                "summary_text": self.regex_extractor.extract_summary(cv_text),
                 "skills": self.regex_extractor.extract_skills(cv_text),
                 "job_history": self.regex_extractor.extract_job_history(cv_text),
                 "education": self.regex_extractor.extract_education(cv_text)
@@ -297,7 +291,44 @@ class BackendManager:
         if application_details_row:
             return application_details_row['cv_path']
         return None
+    
+    def get_full_cv_text(self, applicant_id: int) -> str:
+        """
+        Retrieves the full CV text for a given applicant ID.
+        Returns the text if found, otherwise returns an error message.
+        """
+        cv_path = self.get_raw_cv_path(applicant_id)
+        if not cv_path or not os.path.exists(cv_path):
+            return "CV file not found."
 
+        cv_text = self.cv_processor.extract_text_from_pdf(cv_path)
+        if not cv_text:
+            return "Could not extract text from CV."
+        
+        return cv_text
+    
+    def _get_applicant_profile(self, applicant_id: int) -> dict:
+        """
+        Retrieves the applicant profile and CV summary for a given applicant ID.
+        Returns a dictionary with applicant info and extracted CV details.
+        first_name, last_name, date_of_birth, address, phone_number
+        """
+        profile = self.db_manager.get_applicant_profile_by_id(applicant_id)
+        if not profile:
+            return {"error": "Applicant not found."}
+
+        application_details_row = self.db_manager._execute_query(
+            "SELECT * FROM ApplicantProfile WHERE applicant_id = %s",
+            (applicant_id,), fetch_one=True
+        )       
+             
+        application_details_row['date_of_birth'] = str(application_details_row['date_of_birth']) if application_details_row['date_of_birth'] else "N/A" 
+        
+        if not application_details_row:
+            return {"error": "Applicant profile not found."}
+        
+        return application_details_row
+    
     def shutdown_backend(self):
         """Closes any open connections."""
         self.db_manager.close()
