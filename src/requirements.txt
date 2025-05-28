@@ -1,2 +1,5 @@
 PyMySQL
 pdfminer.six
+tk
+pillow
+customtkinter
