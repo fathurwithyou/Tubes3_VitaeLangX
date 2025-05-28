@@ -72,18 +72,18 @@ def main():
             print(
                 f"  Fuzzy Keywords (Highest Similarity: {result['highest_fuzzy_similarity']:.2f}%): {result['fuzzy_keywords']}")
             
-    summary = backend_manager.get_cv_summary(4)
+    summary = backend_manager.get_cv_summary(2)
     if "error" not in summary:
-        print(f"Name: {summary['applicant_info']['name']}")
-        print(f"Birthdate: {summary['applicant_info']['birthdate']}")
-        print(f"Address: {summary['applicant_info']['address']}")
-        print(f"Phone: {summary['applicant_info']['phone_number']}")
-        print(f"\nSummary: {summary['extracted_info']['summary_text']}")
+        print(f"Name: {summary['applicant_profile']['first_name']} {summary['applicant_profile']['last_name']}")
+        print(f"Birthdate: {summary['applicant_profile']['date_of_birth']}")
+        print(f"Address: {summary['applicant_profile']['address']}")
+        print(f"Phone: {summary['applicant_profile']['phone_number']}")
         print(f"Skills: {', '.join(summary['extracted_info']['skills'])}")
         print("Job History:")
         for job in summary['extracted_info']['job_history']:
-            print(f"  - {job['title']} at {job['company']} ({job['dates']})")
-            print(f"    Description: {job['description']}")
+            # Print job title in cyan, company in yellow, dates in magenta
+            print(f"\033[36m- {job['title']}\033[0m at \033[33m{job['company']}\033[0m (\033[35m{job['dates']}\033[0m)")
+            print(f"Description:\n{job['description']}")
         print("Education:")
         for edu in summary['extracted_info']['education']:
             print(
@@ -91,9 +91,13 @@ def main():
     else:
         print(f"Error getting summary: {summary['error']}")
 
-    print(f"\n--- Getting Raw CV Path for Applicant ID 4 ---")
-    raw_cv_path = backend_manager.get_raw_cv_path(4)
-    print(f"Raw CV Path: {raw_cv_path}")
+    # print(f"\n--- Getting Raw CV Path for Applicant ID 4 ---")
+    # raw_cv_path = backend_manager.get_raw_cv_path(5)
+    # print(f"Raw CV Path: {raw_cv_path}")
+    
+    # print("\n--- Getting Text Content for Applicant ID 4 ---")
+    # text_content = backend_manager.get_full_cv_text(5)
+    # print(f"Text Content:\n{text_content}...")  # Print first 500 characters
 
     backend_manager.shutdown_backend()
     print("\nBackend shut down.")
