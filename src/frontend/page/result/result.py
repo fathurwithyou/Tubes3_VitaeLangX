@@ -268,9 +268,9 @@ promising profiles are now on your desk."""
             placeholder.pack()
     
     def show_summary(self, name):
-        print(f"Showing summary for {name}")
-        # TODO: Navigate to summary page
-        
+            print(f"Showing summary for {name}")
+            self.navigate_callback("summary")
+            
     def view_cv(self, name):
         print(f"Viewing CV for {name}")
-        # TODO: Open CV file
+        self.navigate_callback("cv")
