@@ -17,7 +17,7 @@ class BackendManager:
     and regex extraction.
     """
 
-    def __init__(self, db_host='localhost', db_user='root', db_password='12345678', db_name='ats_db'):
+    def __init__(self, db_host='localhost', db_user='root', db_password='', db_name='ats_db'):
         self.db_manager = DatabaseManager(
             host=db_host, user=db_user, password=db_password, db=db_name)
         self.cv_processor = CVProcessor()
