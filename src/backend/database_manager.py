@@ -9,7 +9,7 @@ class DatabaseManager:
     Manages connections and operations for the MySQL database.
     """
 
-    def __init__(self, host='localhost', user='root', password='', db='ats_db'):
+    def __init__(self, host='localhost', user='root', password='12345678', db='ats_db'):
         self.connection = None
         self.host = host
         self.user = user
@@ -161,7 +161,7 @@ class DatabaseManager:
 
     def get_all_application_details(self) -> list[ApplicationDetail]:
         """Retrieves all application details."""
-        query = "SELECT * FROM ApplicationDetail LIMIT 10"
+        query = "SELECT * FROM ApplicationDetail LIMIT 11"
         rows = self._execute_query(query, fetch_all=True)
         if rows:
             return [ApplicationDetail(**row) for row in rows]

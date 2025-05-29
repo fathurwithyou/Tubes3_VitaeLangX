@@ -1,10 +1,11 @@
 import customtkinter as ctk
 from PIL import Image
 import os
+from backend import Settings
 
 class SearchPage(ctk.CTkFrame):
     
-    def __init__(self, parent, navigate_callback):
+    def __init__(self, parent, navigate_callback, backend_manager):
         super().__init__(
             parent,
             fg_color="#1B2B4C",
@@ -14,8 +15,9 @@ class SearchPage(ctk.CTkFrame):
         self.navigate_callback = navigate_callback
         self.pack(fill="both", expand=True)
         
-        self.selected_algorithm = ctk.StringVar(value="Knuth-Morris-Pratt")
-        self.top_matches_value = ctk.StringVar(value="1")
+        self.selected_algorithm = ctk.StringVar(value="KMP") # Default to KMP to match backend options
+        # Top matches entry now uses Settings as default
+        self.top_matches_value = ctk.StringVar(value=str(Settings.TOP_N_MATCHES))
         
         self.setup_search_page()
     
@@ -350,3 +352,174 @@ system reveal the most relevant candidates, exact or approximate."""
         print(f"Top matches: {top_matches}")
         
         self.navigate_callback("result")
+
+    def __init__(self, parent, navigate_callback, backend_manager):
+        super().__init__(
+            parent,
+            fg_color="#1B2B4C",
+            corner_radius=0
+        )
+        
+        self.navigate_callback = navigate_callback
+        self.backend_manager = backend_manager # Store backend_manager
+        self.pack(fill="both", expand=True)
+        
+        self.selected_algorithm = ctk.StringVar(value="KMP") # Default to KMP to match backend options
+        # Top matches entry now uses Settings as default
+        self.top_matches_value = ctk.StringVar(value=str(Settings.TOP_N_MATCHES))
+        
+        self.setup_search_page()
+
+    # ... (create_back_button_centered, create_header_section, etc. remain the same) ...
+    
+    def create_search_content(self, parent):
+        form_frame = ctk.CTkFrame(
+            parent,
+            fg_color="#DFCFC2",
+            corner_radius=20,
+            border_width=3,
+            border_color="#DFCFC2",
+            width=800, # Adjusted for potentially longer algorithm names
+            height=350 
+        )
+        form_frame.pack(pady=(0, 30)) 
+        form_frame.pack_propagate(False)
+        
+        inner_container = ctk.CTkFrame(form_frame, fg_color="transparent")
+        inner_container.pack(expand=True, fill="both", padx=30, pady=30) # Increased padding
+        
+        self.create_keywords_section(inner_container)
+        
+        self.create_algorithm_section(inner_container)
+        
+        self.create_top_matches_section(inner_container)
+
+    def create_algorithm_section(self, parent):
+        algorithm_container = ctk.CTkFrame(parent, fg_color="transparent")
+        algorithm_container.pack(fill="x", pady=(0, 20))
+        
+        algorithm_label = ctk.CTkLabel(
+            algorithm_container,
+            text="Search Algorithm",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#1B2B4C"
+        )
+        algorithm_label.pack(anchor="w", pady=(0, 5)) 
+        
+        # Updated values to match backend_manager expected strings
+        self.algorithm_options = ["KMP", "Boyer-Moore", "Aho-Corasick"]
+        self.algorithm_segmented = ctk.CTkSegmentedButton(
+            algorithm_container,
+            values=self.algorithm_options, # Use defined options
+            font=ctk.CTkFont(size=14),
+            height=40,
+            selected_color="#334D7A",
+            selected_hover_color="#334D7A",
+            unselected_color="#FFFFFF",
+            unselected_hover_color="#F0F0F0",
+            text_color_disabled="#AC9E92", # Not directly used here, but good to keep
+            fg_color="#FFFFFF", # Background for the unselected parts
+            text_color="#1B2B4C", # Text color for unselected
+            # Text color for selected
+            corner_radius=8,
+            border_width= 0, # No border for segmented button itself
+            command=self.select_algorithm_segmented
+        )
+
+        self.algorithm_segmented.pack(fill="x", expand=True) # Fill available width
+        self.algorithm_segmented.set("KMP") # Default selection
+        # No need for update_algorithm_button_colors if CTk handles text color change on selection
+
+    def select_algorithm_segmented(self, value):
+        self.selected_algorithm.set(value)
+        print(f"Algorithm selected: {value}")
+        # CTk usually handles the color update automatically for SegmentedButton
+
+    def create_top_matches_section(self, parent):
+        # ... (implementation is okay, just ensure self.top_matches_entry.insert(0, self.top_matches_value.get()))
+        matches_container = ctk.CTkFrame(parent, fg_color="transparent")
+        matches_container.pack(fill="x", pady=(0, 20)) 
+        
+        matches_label = ctk.CTkLabel(
+            matches_container,
+            text="Top Matches",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#1B2B4C"
+        )
+        matches_label.pack(anchor="w", pady=(0, 5))  
+        
+        spinbox_container = ctk.CTkFrame(matches_container, fg_color="transparent")
+        spinbox_container.pack(anchor="w")
+        
+        self.top_matches_entry = ctk.CTkEntry(
+            spinbox_container,
+            width=80,
+            height=35,
+            font=ctk.CTkFont(size=14),
+            fg_color="#FFFFFF",
+            border_color="#FFFFFF", # No border for entry
+            border_width=0,
+            text_color="#000000",
+            justify="center",
+            corner_radius=8
+        )
+        self.top_matches_entry.pack(side="left")
+        self.top_matches_entry.insert(0, self.top_matches_value.get()) # Use the StringVar's value
+        
+        buttons_container = ctk.CTkFrame(spinbox_container, fg_color="transparent")
+        buttons_container.pack(side="left", padx=(5, 0))
+        
+        up_button = ctk.CTkButton(
+            buttons_container, text="▲", width=30, height=17, font=ctk.CTkFont(size=12),
+            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#FFFFFF", corner_radius=4,
+            command=self.increment_matches
+        )
+        up_button.pack(pady=(0, 1))
+        
+        down_button = ctk.CTkButton(
+            buttons_container, text="▼", width=30, height=17, font=ctk.CTkFont(size=12),
+            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#FFFFFF", corner_radius=4,
+            command=self.decrement_matches
+        )
+        down_button.pack(pady=(0, 0))
+
+    def perform_search(self):
+        keywords_str = self.keywords_entry.get()
+        keywords_list = [k.strip() for k in keywords_str.split(',') if k.strip()]
+        
+        algorithm = self.selected_algorithm.get()
+        try:
+            top_matches = int(self.top_matches_entry.get())
+            if top_matches <= 0:
+                top_matches = Settings.TOP_N_MATCHES # Fallback to default if invalid
+        except ValueError:
+            top_matches = Settings.TOP_N_MATCHES # Fallback if not an integer
+        
+        print(f"Searching with keywords: {keywords_list}")
+        print(f"Using algorithm: {algorithm}")
+        print(f"Top matches: {top_matches}")
+
+        if not keywords_list:
+            # Optionally, show a message to the user that keywords are required
+            print("No keywords entered.")
+            # Simple dialog:
+            # from tkinter import messagebox
+            # messagebox.showwarning("Input Error", "Please enter at least one keyword.")
+            return
+            
+        if self.backend_manager:
+            search_results_data = self.backend_manager.search_cvs(
+                keywords=keywords_list,
+                algorithm=algorithm,
+                top_n_matches=top_matches,
+                fuzzy_threshold=Settings.FUZZY_THRESHOLD
+            )
+            print("------ SEARCH RESULTS DATA (from SearchPage) ------")
+            import json # For pretty printing
+            print(json.dumps(search_results_data, indent=2))
+            print("----------------------------------------------------")
+            self.navigate_callback("result", search_results=search_results_data)
+        else:
+            print("Backend manager not available.")
+            # Fallback to dummy navigation if needed, or show error
+            self.navigate_callback("result", search_results=None) # Indicate no results
