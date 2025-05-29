@@ -27,7 +27,10 @@ class Seeder:
 
             common_profile = ApplicantProfile(
                 first_name="Default",
-                last_name="Applicant"
+                last_name="Applicant",
+                date_of_birth="2000-01-01",  
+                address="123 Default St, Default City, DC 12345",
+                phone_number="+1234567890"  
             )
 
             applicant_id = self.db_manager.insert_applicant_profile(

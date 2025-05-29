@@ -1,6 +1,4 @@
-from backend.database_manager import DatabaseManager
-from backend.seeder import Seeder
-from backend.core_manager import BackendManager
+from backend import *
 
 if __name__ == '__main__':
 
