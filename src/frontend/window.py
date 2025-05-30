@@ -60,12 +60,14 @@ class VitaeLangXWindow:
         self.navigate_to_page("home")
     
     def navigate_to_page(self, page_name, **kwargs):
-
-
-
         if self.backend_manager is None:
             print("ERROR in navigate_to_page: backend_manager is None. Initialization might have failed.")
+            for widget in self.content_frame.winfo_children():
+                widget.destroy()
+            error_label = ctk.CTkLabel(self.content_frame, text="Critical Error: Backend not available.", font=ctk.CTkFont(size=20))
+            error_label.pack(expand=True, padx=20, pady=20)
             return
+           
         
         for widget in self.content_frame.winfo_children():
             widget.destroy()
@@ -86,8 +88,8 @@ class VitaeLangXWindow:
         self.main_container.update_idletasks()
 
         common_args = {"parent": self.content_frame, "navigate_callback": self.navigate_to_page, "backend_manager": self.backend_manager} #
-        page_specific_args = kwargs #
-        current_page_args = {**common_args, **page_specific_args} #
+        page_specific_args = kwargs 
+        current_page_args = {**common_args, **page_specific_args} 
 
         if page_name == "home":
             self.current_page = HomePage(self.content_frame, self.navigate_to_page)
@@ -105,6 +107,11 @@ class VitaeLangXWindow:
             self.current_page = CVPage(**current_page_args)
         elif page_name == "summary":
             self.current_page = SummaryPage(**current_page_args)
+        else:
+            print(f"Warning: Unknown page name '{page_name}' in navigate_to_page.")
+            self.current_page = HomePage(self.content_frame, self.navigate_to_page)
+            if self.sidebar.winfo_ismapped(): 
+                self.sidebar.set_active_page("home")
     
     def run(self):
         """Start the application"""
