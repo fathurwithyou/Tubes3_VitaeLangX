@@ -158,6 +158,7 @@ class ResultPage(ctk.CTkFrame):
 
 
     def create_result_card(self, parent, result):
+        print(f"DEBUG: Result data for card: {result}")
         content_frame = ctk.CTkFrame(parent, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=15, pady=15) # Adjusted padding
         
@@ -187,6 +188,32 @@ class ResultPage(ctk.CTkFrame):
             text_color="#334D7A" # Different color for emphasis
         )
         matches_label.pack(side="right", anchor="e") # Anchor to east
+
+        buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        buttons_frame.pack(fill="x", side="bottom", pady=(5,0)) # Ensure it's at the bottom
+                
+        summary_button = ctk.CTkButton(
+            buttons_frame, text="Summary", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
+            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
+            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
+            command=lambda app_id=result.get("applicant_id"):
+                        (
+                    print(f"DEBUG: Summary button clicked with app_id: {app_id}"), # Tambahkan ini
+                    self.show_summary(app_id)
+                )
+            )
+        summary_button.pack(side="left", expand=True, padx=(0,5))
+                
+        view_cv_button = ctk.CTkButton(
+            buttons_frame, text="View CV", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
+            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
+            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
+            command=lambda app_id=result.get("applicant_id"): (
+                    print(f"DEBUG: View CV button clicked with app_id: {app_id}"), # Tambahkan ini
+                    self.view_cv(app_id)
+                )
+            )
+        view_cv_button.pack(side="right", expand=True, padx=(5,0))
 
         keywords_outer_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         keywords_outer_frame.pack(fill="both", expand=True, pady=(0,10))
@@ -223,25 +250,6 @@ class ResultPage(ctk.CTkFrame):
         if not exact_keywords and not fuzzy_keywords_info:
             no_keywords_label = ctk.CTkLabel(keywords_scroll_frame, text="No specific keywords matched.", font=ctk.CTkFont(size=10), text_color="#1B2B4C")
             no_keywords_label.pack(anchor="center", expand=True) # Center if no keywords
-
-        buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", side="bottom", pady=(5,0)) # Ensure it's at the bottom
-                
-        summary_button = ctk.CTkButton(
-            buttons_frame, text="Summary", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
-            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
-            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
-            command=lambda app_id=result.get("applicant_id"): self.show_summary(app_id)
-            )
-        summary_button.pack(side="left", expand=True, padx=(0,5))
-                
-        view_cv_button = ctk.CTkButton(
-            buttons_frame, text="View CV", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
-            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
-            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
-            command=lambda app_id=result.get("applicant_id"): self.view_cv(app_id)
-            )
-        view_cv_button.pack(side="right", expand=True, padx=(5,0))
 
     def show_summary(self, applicant_id):
             if applicant_id is None:
