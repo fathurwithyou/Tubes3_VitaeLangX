@@ -43,7 +43,7 @@ class CVPage(ctk.CTkFrame):
         self.cv_content_text = self.backend_manager.get_full_cv_text(self.applicant_id) #
         if not self.cv_content_text or "Could not extract text" in self.cv_content_text or "CV file not found" in self.cv_content_text :
              print(f"Warning/Error (CVPage): {self.cv_content_text}")
-             # Keep the default error message or the one from backend
+             
 
         self.setup_cv_page()
 
@@ -70,15 +70,15 @@ class CVPage(ctk.CTkFrame):
         back_button.pack(pady=20)
             
     def setup_cv_page(self):
-        for widget in self.winfo_children(): # Clear previous content if any (e.g. error message)
+        for widget in self.winfo_children(): 
             widget.destroy()
             
         main_container = ctk.CTkFrame(self, fg_color="transparent")
         main_container.pack(fill="both", expand=True, padx=50, pady=30)
         
         self.create_back_button(main_container)
-        self.create_header_section(main_container) # This will now use the loaded candidate_name
-        self.create_cv_content(main_container)   # This will now use the loaded cv_content_text
+        self.create_header_section(main_container) 
+        self.create_cv_content(main_container)   
     
     def create_back_button(self, parent):
         back_button = ctk.CTkButton(
@@ -95,25 +95,25 @@ class CVPage(ctk.CTkFrame):
             text_color="#DFCFC2",
             command=lambda: self.navigate_callback("result")
         )
-        back_button.pack(anchor="nw", pady=(0, 0)) # Removed extra pady
+        back_button.pack(anchor="nw", pady=(0, 0)) 
     
     def create_header_section(self, parent):
         header_container = ctk.CTkFrame(parent, fg_color="transparent")
-        header_container.pack(fill="x", pady=(0, 20)) # Adjusted padding
+        header_container.pack(fill="x", pady=(0, 20)) 
         
         header_content = ctk.CTkFrame(header_container, fg_color="transparent")
         header_content.pack(expand=True)
         
         left_image = ctk.CTkFrame(header_content, fg_color="transparent")
         left_image.pack(side="left", padx=(0, 25))
-        self.create_bearlock_happy_image(left_image) # This can stay
+        self.create_bearlock_happy_image(left_image) 
         
         center_content = ctk.CTkFrame(header_content, fg_color="transparent")
         center_content.pack(side="left", expand=True)
         
         title_label = ctk.CTkLabel(
             center_content,
-            text=f"Full Case File: {self.candidate_name}", # Dynamic name
+            text=f"Full Case File: {self.candidate_name}", 
             font=ctk.CTkFont(size=32, weight="bold"),
             text_color="#DFCFC2"
         )
@@ -133,7 +133,7 @@ every detail, just as they wrote it."""
         
         right_image = ctk.CTkFrame(header_content, fg_color="transparent")
         right_image.pack(side="right", padx=(25, 0))
-        self.create_asset1_image(right_image) # This can stay
+        self.create_asset1_image(right_image) 
     
     def create_cv_content(self, parent):
         cv_container = ctk.CTkFrame(
@@ -147,12 +147,12 @@ every detail, just as they wrote it."""
         
         cv_scrollable = ctk.CTkScrollableFrame(
             cv_container,
-            fg_color="transparent", # Or "#FFFFFF" for white background for text
+            fg_color="transparent", 
             corner_radius=0
         )
-        cv_scrollable.pack(fill="both", expand=True, padx=20, pady=20) # Adjusted padding
+        cv_scrollable.pack(fill="both", expand=True, padx=20, pady=20) 
         
-        # cv_content is now self.cv_content_text fetched in _load_data_and_setup_ui
+        
         
         cv_text_label = ctk.CTkLabel(
             cv_scrollable,
@@ -161,13 +161,13 @@ every detail, just as they wrote it."""
             text_color="#000000",
             justify="left",
             anchor="nw",
-            wraplength=cv_scrollable.winfo_width() - 20 # Make it wrap within the scrollable frame
+            wraplength=cv_scrollable.winfo_width() - 20 
         )
         cv_text_label.pack(fill="both", expand=True)
 
-    # --- Image creation methods (can remain largely the same) ---
+   
     def create_bearlock_happy_image(self, parent):
-        # ... (implementation as provided, consider centralizing asset paths)
+       
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             image_path = os.path.join(current_dir, "..", "..", "assets", "bearlock-happy.png")
@@ -198,7 +198,7 @@ every detail, just as they wrote it."""
             placeholder.pack()
     
     def create_asset1_image(self, parent):
-        # ... (implementation as provided, consider centralizing asset paths)
+        
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             image_path = os.path.join(current_dir, "..", "..", "assets", "asset1.png")

@@ -21,36 +21,34 @@ class ResultPage(ctk.CTkFrame):
         self.setup_result_page()
     
     def setup_result_page(self):
-        # Frame utama untuk seluruh halaman dengan padding luar
+       
         page_main_container = ctk.CTkFrame(self, fg_color="transparent")
-        page_main_container.pack(fill="both", expand=True, padx=30, pady=20) # Adjusted padding
-
-        # Tombol Kembali (dipindahkan ke page_main_container agar selalu terlihat)
-        # dan tidak menggunakan place() agar lebih konsisten dengan pack()
+        page_main_container.pack(fill="both", expand=True, padx=30, pady=20) # 
+        
         back_button_frame = ctk.CTkFrame(page_main_container, fg_color="transparent")
-        back_button_frame.pack(fill="x", pady=(0, 10)) # Frame untuk tombol kembali agar bisa diatur posisinya (misal, ke kiri)
+        back_button_frame.pack(fill="x", pady=(0, 10)) 
         self.create_back_button(back_button_frame)
 
-        # Frame untuk Header (tetap)
+        
         self.header_display_frame = ctk.CTkFrame(page_main_container, fg_color="transparent")
-        self.header_display_frame.pack(fill="x", pady=(0, 15)) # Padding bawah header
-        self.create_header_section(self.header_display_frame) # Header dibuat di dalam frame ini
+        self.header_display_frame.pack(fill="x", pady=(0, 15)) 
+        self.create_header_section(self.header_display_frame) 
 
-        # Frame yang Dapat Di-scroll untuk Hasil Pencarian
+       
         self.scrollable_results_area = ctk.CTkScrollableFrame(
             page_main_container, 
-            fg_color="transparent", # Atau warna latar lain jika diinginkan untuk area scroll
-            scrollbar_button_color="#334D7A", # Sesuaikan warna scrollbar
+            fg_color="transparent", 
+            scrollbar_button_color="#334D7A", 
             scrollbar_button_hover_color="#4A5D8A"
         )
         self.scrollable_results_area.pack(fill="both", expand=True)
 
-        # Membuat Kisi Hasil di dalam Area Scrollable
+        
         self.create_results_grid(self.scrollable_results_area)
     
-    def create_back_button(self, parent): # Parent sekarang adalah back_button_frame
+    def create_back_button(self, parent): 
         back_button = ctk.CTkButton(
-            parent, # Ditambahkan ke parent yang diberikan (back_button_frame)
+            parent, 
             text="←",
             font=ctk.CTkFont(size=20, weight="bold"),
             width=60,
@@ -65,13 +63,11 @@ class ResultPage(ctk.CTkFrame):
         )
         back_button.pack(anchor="nw") # Tombol kembali di kiri atas frame-nya
     
-    def create_header_section(self, parent): # Parent sekarang adalah self.header_display_frame
-        # header_container tidak perlu lagi, langsung gunakan parent
-        # header_container = ctk.CTkFrame(parent, fg_color="transparent")
-        # header_container.pack(pady=(0, 20)) # Padding ini bisa diatur pada self.header_display_frame.pack()
+    def create_header_section(self, parent): 
+
         
-        header_content = ctk.CTkFrame(parent, fg_color="transparent") # Gunakan parent langsung
-        header_content.pack() # Biarkan header_content mengisi parent-nya (header_display_frame)
+        header_content = ctk.CTkFrame(parent, fg_color="transparent") 
+        header_content.pack() 
         
         left_image = ctk.CTkFrame(header_content, fg_color="transparent")
         left_image.pack(side="left", padx=(0, 20))
@@ -102,9 +98,9 @@ class ResultPage(ctk.CTkFrame):
         description_label = ctk.CTkLabel(
             center_content,
             text=description_text,
-            font=ctk.CTkFont(size=14), # Pastikan font size sesuai
-            text_color="#FFFFFF",      # Pastikan warna teks sesuai
-            justify="center"           # Justifikasi teks
+            font=ctk.CTkFont(size=14), 
+            text_color="#FFFFFF",      
+            justify="center"           
         )
         description_label.pack(pady=(10, 0))
         
@@ -112,41 +108,39 @@ class ResultPage(ctk.CTkFrame):
         right_image.pack(side="right", padx=(20, 0))
         self.create_book_image(right_image)
 
-    def create_results_grid(self, parent_scrollable_frame): # Parent sekarang adalah area scrollable
-        # Frame ini akan ada di dalam scrollable frame dan mengatur semua baris kartu
-        # Ini membantu menjaga padding dan organisasi di dalam area scrollable
+    def create_results_grid(self, parent_scrollable_frame): 
+
         results_organizer = ctk.CTkFrame(parent_scrollable_frame, fg_color="transparent")
-        results_organizer.pack(fill="x", expand=False, padx=10, pady=5) # expand=False agar tidak memanjang vertikal secara aneh di scrollable
+        results_organizer.pack(fill="x", expand=False, padx=10, pady=5) 
 
         actual_results = self.search_results_data.get("results", [])
 
         if not actual_results:
             no_results_label = ctk.CTkLabel(
-                results_organizer, # Tampilkan di dalam organizer
+                results_organizer, 
                 text="No matching CVs found.",
                 font=ctk.CTkFont(size=18),
                 text_color="#FFFFFF"
             )
-            no_results_label.pack(pady=50, expand=True) # expand agar mengisi jika tidak ada hasil
+            no_results_label.pack(pady=50, expand=True) 
             return
         
         max_cols = 3
         
-        # Frame untuk menampung baris-baris kartu, agar bisa di-center jika perlu
-        # atau diatur layoutnya secara keseluruhan
+
         cards_grid_container = ctk.CTkFrame(results_organizer, fg_color="transparent")
         cards_grid_container.pack(anchor="n") # Anchor ke atas
 
         row_frame = None
         for i, result_item in enumerate(actual_results):
             if i % max_cols == 0:
-                # Setiap baris adalah frame baru di dalam cards_grid_container
+                
                 row_frame = ctk.CTkFrame(cards_grid_container, fg_color="transparent")
-                row_frame.pack(fill="x", pady=5, anchor="n") # Beri sedikit jarak antar baris
-                # Konfigurasi kolom agar kartu di dalamnya memiliki lebar yang sama dan merata
+                row_frame.pack(fill="x", pady=5, anchor="n") 
+                
                 for col_idx in range(max_cols):
-                    # Gunakan minsize untuk memastikan kolom tidak terlalu kecil, weight untuk distribusi
-                    row_frame.grid_columnconfigure(col_idx, weight=1, minsize=280) # uniform="card_column" bisa dihilangkan jika minsize digunakan
+                    
+                    row_frame.grid_columnconfigure(col_idx, weight=1, minsize=280) 
 
             card_frame = ctk.CTkFrame(
                 row_frame, # Tambahkan kartu ke row_frame saat ini
@@ -155,14 +149,13 @@ class ResultPage(ctk.CTkFrame):
                 width=280,  # Lebar kartu bisa disesuaikan
                 height=280  # Tinggi kartu bisa disesuaikan
             )
-            # Gunakan grid untuk menempatkan kartu di dalam row_frame
+            
             card_frame.grid(row=0, column=(i % max_cols), padx=10, pady=10, sticky="nsew") # sticky agar mengisi sel grid
             card_frame.pack_propagate(False) 
             
             self.create_result_card(card_frame, result_item)
     
-    # Metode create_result_card, show_summary, view_cv, create_hat_image, create_book_image
-    # tetap sama seperti yang Anda berikan sebelumnya. Saya akan memasukkannya agar lengkap.
+
 
     def create_result_card(self, parent, result):
         content_frame = ctk.CTkFrame(parent, fg_color="transparent")
@@ -198,7 +191,7 @@ class ResultPage(ctk.CTkFrame):
         keywords_outer_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         keywords_outer_frame.pack(fill="both", expand=True, pady=(0,10))
         
-        # Set an explicit height for the scrollable frame for keywords
+        
         keywords_scroll_frame = ctk.CTkScrollableFrame(keywords_outer_frame, fg_color="#F0F0F0", height=80, corner_radius=6) # Lighter background for scroll area
         keywords_scroll_frame.pack(fill="both", expand=True, padx=2, pady=2)
         

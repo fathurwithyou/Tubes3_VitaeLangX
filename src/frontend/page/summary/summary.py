@@ -2,8 +2,7 @@
 import customtkinter as ctk
 from PIL import Image
 import os
-# Ensure Settings is available if needed for display, though not directly used for fetching here
-# from backend import Settings 
+ 
 
 class SummaryPage(ctk.CTkFrame):
     
@@ -41,7 +40,7 @@ class SummaryPage(ctk.CTkFrame):
         self.setup_summary_page()
 
     def _display_error_message(self, message):
-        # Clear existing widgets if any before showing error
+       
         for widget in self.winfo_children():
             widget.destroy()
         
@@ -65,9 +64,7 @@ class SummaryPage(ctk.CTkFrame):
         back_button.pack(pady=20)
 
     def setup_summary_page(self):
-        # If setup_summary_page was already called by _load_data_and_setup_ui
-        # and it succeeded, self.summary_data is populated.
-        # Clear any potential error message widgets if we are re-setting up UI
+
         for widget in self.winfo_children():
             widget.destroy()
             
@@ -370,16 +367,15 @@ assess compatibility at a glance."""
             )
             edu_period.pack(anchor="w", pady=(2, 0))
 
-    # --- Image creation methods (can remain largely the same) ---
+    
     def create_bearlock_confuse_image(self, parent):
-        # ... (implementation as provided, consider centralizing asset paths if used in many places)
-        # For robustness, ensure paths are relative to the script or use absolute paths
+
         try:
-            # Try a path relative to the current file's directory
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            image_path = os.path.join(current_dir, "..", "..", "assets", "bearlock-confuse.png") # Adjusted path
             
-            if not os.path.exists(image_path): # Fallback to original path if not found
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            image_path = os.path.join(current_dir, "..", "..", "assets", "bearlock-confuse.png") 
+            
+            if not os.path.exists(image_path): 
                  image_path = "./assets/bearlock-confuse.png"
 
             if os.path.exists(image_path):
@@ -405,7 +401,7 @@ assess compatibility at a glance."""
             placeholder.pack()
     
     def create_asset4_image(self, parent):
-        # ... (implementation as provided, consider centralizing asset paths)
+        
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             image_path = os.path.join(current_dir, "..", "..", "assets", "asset4.png")
