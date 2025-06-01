@@ -3,13 +3,12 @@ import customtkinter as ctk
 from PIL import Image
 import os
  
-
 class SummaryPage(ctk.CTkFrame):
     
     def __init__(self, parent, navigate_callback, backend_manager, applicant_id, **kwargs):
         super().__init__(
             parent,
-            fg_color="#1B2B4C",
+            fg_color="#1B2B4C", # Matches screenshot background
             corner_radius=0,
             **kwargs
         )
@@ -17,7 +16,7 @@ class SummaryPage(ctk.CTkFrame):
         self.navigate_callback = navigate_callback
         self.backend_manager = backend_manager
         self.applicant_id = applicant_id
-        self.summary_data = None # Initialize
+        self.summary_data = None 
         
         self.pack(fill="both", expand=True)
         
@@ -29,7 +28,7 @@ class SummaryPage(ctk.CTkFrame):
             self._display_error_message("No applicant information available.")
             return
 
-        self.summary_data = self.backend_manager.get_cv_summary(self.applicant_id)
+        self.summary_data = self.backend_manager.get_cv_summary(self.applicant_id) #
 
         if not self.summary_data or "error" in self.summary_data:
             error_msg = self.summary_data.get("error", "Failed to load summary data.") if self.summary_data else "Failed to load summary data."
@@ -40,7 +39,6 @@ class SummaryPage(ctk.CTkFrame):
         self.setup_summary_page()
 
     def _display_error_message(self, message):
-       
         for widget in self.winfo_children():
             widget.destroy()
         
@@ -56,15 +54,17 @@ class SummaryPage(ctk.CTkFrame):
             self,
             text="← Back to Results",
             font=ctk.CTkFont(size=16),
-            width=150,
-            height=40,
-            corner_radius=8,
+            width=150, # Standardized button width
+            height=40,  # Standardized button height
+            corner_radius=8, # Consistent corner radius
+            fg_color="#334D7A", # Consistent button color
+            hover_color="#273A5C", # Consistent hover color
+            text_color="#DFCFC2",  # Consistent text color
             command=lambda: self.navigate_callback("result") 
         )
         back_button.pack(pady=20)
 
     def setup_summary_page(self):
-
         for widget in self.winfo_children():
             widget.destroy()
             
@@ -72,8 +72,8 @@ class SummaryPage(ctk.CTkFrame):
         main_container.pack(fill="both", expand=True, padx=50, pady=30)
         
         self.create_back_button(main_container)
-        self.create_header_section(main_container)
-        self.create_summary_content(main_container)
+        self.create_header_section(main_container) # This header is for the page title, not individual cards
+        self.create_summary_content(main_container) # This will create the cards
     
     def create_back_button(self, parent):
         back_button = ctk.CTkButton(
@@ -88,23 +88,24 @@ class SummaryPage(ctk.CTkFrame):
             fg_color="#334D7A",
             hover_color="#1B2B4C", 
             text_color="#DFCFC2",
-            command=lambda: self.navigate_callback("result") # Ensure it goes back to results if that's the previous page
+            command=lambda: self.navigate_callback("result")
         )
         back_button.pack(anchor="nw", pady=(0, 15))
     
-    def create_header_section(self, parent):
+    def create_header_section(self, parent): # This is the page header, not card header
         header_container = ctk.CTkFrame(parent, fg_color="transparent")
         header_container.pack(fill="x", pady=(0, 20))
         
         header_content = ctk.CTkFrame(header_container, fg_color="transparent")
-        header_content.pack(expand=True)
+        header_content.pack(expand=True) # Center the content
         
-        left_image = ctk.CTkFrame(header_content, fg_color="transparent")
-        left_image.pack(side="left", padx=(0, 25))
-        self.create_bearlock_confuse_image(left_image) # This can stay as is
+        # Side images can be kept or removed based on overall design preference
+        # left_image = ctk.CTkFrame(header_content, fg_color="transparent")
+        # left_image.pack(side="left", padx=(0, 25))
+        # self.create_bearlock_confuse_image(left_image)
         
         center_content = ctk.CTkFrame(header_content, fg_color="transparent")
-        center_content.pack(side="left", expand=True)
+        center_content.pack(side="left", expand=True) # Let text content take space
 
         profile = self.summary_data.get('applicant_profile', {})
         first_name = profile.get('first_name', 'N/A')
@@ -127,25 +128,27 @@ assess compatibility at a glance."""
             text=description_text,
             font=ctk.CTkFont(size=14),
             text_color="#FFFFFF",
-            justify="center"
+            justify="center",
+            wraplength=600 # Adjust if needed
         )
         description_label.pack(pady=(8, 0))
         
-        right_image = ctk.CTkFrame(header_content, fg_color="transparent")
-        right_image.pack(side="right", padx=(25, 0))
-        self.create_asset4_image(right_image) # This can stay as is
+        # right_image = ctk.CTkFrame(header_content, fg_color="transparent")
+        # right_image.pack(side="right", padx=(25, 0))
+        # self.create_asset4_image(right_image)
     
-    def create_summary_content(self, parent):
+    def create_summary_content(self, parent): # This creates the scrollable area with cards
         scrollable_container = ctk.CTkScrollableFrame(
             parent,
             fg_color="transparent",
-            corner_radius=0
+            corner_radius=0,
+            scrollbar_button_color="#334D7A", 
+            scrollbar_button_hover_color="#4A5D8A"
         )
         scrollable_container.pack(fill="both", expand=True)
         
         if not self.summary_data or "error" in self.summary_data:
-             # Error already handled by _display_error_message, content won't be created
-            return
+            return # Error already handled by _display_error_message
 
         self.create_personal_info_section(scrollable_container)
         self.create_skills_section(scrollable_container)
@@ -160,21 +163,21 @@ assess compatibility at a glance."""
         
         info_card = ctk.CTkFrame(
             parent,
-            fg_color="#DFCFC2",
+            fg_color="#DFCFC2", # Card background matches screenshot
             corner_radius=15,
-            border_width=3,
-            border_color="#DFCFC2"
+            border_width=0, # Screenshot does not show prominent border on card itself
+            # border_color="#DFCFC2" 
         )
-        info_card.pack(fill="x", pady=(0, 20))
+        info_card.pack(fill="x", pady=(0, 20), padx=5) # Added small padx for cards
         
-        header_frame = ctk.CTkFrame(info_card, fg_color="#B8A398", corner_radius=12)
-        header_frame.pack(fill="x", padx=3, pady=(3, 0))
+        header_frame = ctk.CTkFrame(info_card, fg_color="#B8A398", corner_radius=12) # Header bar color
+        header_frame.pack(fill="x", padx=0, pady=0) # No internal padding for header bar frame
         
         header_label = ctk.CTkLabel(
             header_frame,
-            text=candidate_name, # Dynamic name
+            text=candidate_name,
             font=ctk.CTkFont(size=18, weight="bold"),
-            text_color="#1B2B4C"
+            text_color="#1B2B4C" # Dark text on header bar
         )
         header_label.pack(anchor="w", padx=20, pady=8)
         
@@ -192,7 +195,7 @@ assess compatibility at a glance."""
                 content_frame,
                 text=detail_text,
                 font=ctk.CTkFont(size=14),
-                text_color="#1B2B4C"
+                text_color="#1B2B4C" # Dark text for details
             )
             detail_label.pack(anchor="w", pady=2)
     
@@ -204,24 +207,23 @@ assess compatibility at a glance."""
             parent,
             fg_color="#DFCFC2",
             corner_radius=15,
-            border_width=3,
-            border_color="#DFCFC2"
+            border_width=0,
         )
-        skills_card.pack(fill="x", pady=(0, 20))
+        skills_card.pack(fill="x", pady=(0, 20), padx=5)
         
         header_frame = ctk.CTkFrame(skills_card, fg_color="#B8A398", corner_radius=12)
-        header_frame.pack(fill="x", padx=3, pady=(3, 0))
+        header_frame.pack(fill="x", padx=0, pady=0)
         
         header_label = ctk.CTkLabel(
             header_frame,
-            text="Skills", # Static title
+            text="Skill", # Changed from "Skills" to "Skill" to match screenshot
             font=ctk.CTkFont(size=18, weight="bold"),
             text_color="#1B2B4C"
         )
         header_label.pack(anchor="w", padx=20, pady=8)
         
         content_frame = ctk.CTkFrame(skills_card, fg_color="transparent")
-        content_frame.pack(fill="x", padx=20, pady=15)
+        content_frame.pack(fill="x", padx=20, pady=15) # Min height for empty section
         
         if skills:
             skills_text = ", ".join(skills)
@@ -230,7 +232,7 @@ assess compatibility at a glance."""
                 text=skills_text,
                 font=ctk.CTkFont(size=14),
                 text_color="#1B2B4C",
-                wraplength=parent.winfo_width() - 60 # Adjust wraplength
+                wraplength=parent.winfo_width() - 80 # Adjust wraplength considering padding
             )
             skills_display_label.pack(anchor="w")
         else:
@@ -250,17 +252,16 @@ assess compatibility at a glance."""
             parent,
             fg_color="#DFCFC2",
             corner_radius=15,
-            border_width=3,
-            border_color="#DFCFC2"
+            border_width=0,
         )
-        job_card.pack(fill="x", pady=(0, 20))
+        job_card.pack(fill="x", pady=(0, 20), padx=5)
         
         header_frame = ctk.CTkFrame(job_card, fg_color="#B8A398", corner_radius=12)
-        header_frame.pack(fill="x", padx=3, pady=(3, 0))
+        header_frame.pack(fill="x", padx=0, pady=0)
         
         header_label = ctk.CTkLabel(
             header_frame,
-            text="Job History",
+            text="Job History", # Matches screenshot (implied)
             font=ctk.CTkFont(size=18, weight="bold"),
             text_color="#1B2B4C"
         )
@@ -302,7 +303,7 @@ assess compatibility at a glance."""
                 text=job_desc_text,
                 font=ctk.CTkFont(size=14),
                 text_color="#1B2B4C",
-                wraplength=parent.winfo_width() - 70, # Adjust wraplength
+                wraplength=parent.winfo_width() - 90, 
                 justify="left"
             )
             job_desc.pack(anchor="w")
@@ -315,13 +316,12 @@ assess compatibility at a glance."""
             parent,
             fg_color="#DFCFC2",
             corner_radius=15,
-            border_width=3,
-            border_color="#DFCFC2"
+            border_width=0,
         )
-        edu_card.pack(fill="x", pady=(0, 20))
+        edu_card.pack(fill="x", pady=(0, 20), padx=5)
         
         header_frame = ctk.CTkFrame(edu_card, fg_color="#B8A398", corner_radius=12)
-        header_frame.pack(fill="x", padx=3, pady=(3, 0))
+        header_frame.pack(fill="x", padx=0, pady=0)
         
         header_label = ctk.CTkLabel(
             header_frame,
@@ -367,66 +367,33 @@ assess compatibility at a glance."""
             )
             edu_period.pack(anchor="w", pady=(2, 0))
 
-    
+    # Image loading functions can be kept or removed based on overall design preference
     def create_bearlock_confuse_image(self, parent):
-
         try:
-            
             current_dir = os.path.dirname(os.path.abspath(__file__))
             image_path = os.path.join(current_dir, "..", "..", "assets", "bearlock-confuse.png") 
-            
-            if not os.path.exists(image_path): 
-                 image_path = "./assets/bearlock-confuse.png"
-
+            if not os.path.exists(image_path): image_path = "./assets/bearlock-confuse.png"
             if os.path.exists(image_path):
                 bearlock_image = Image.open(image_path)
-                bearlock_ctk_image = ctk.CTkImage(
-                    light_image=bearlock_image,
-                    dark_image=bearlock_image,
-                    size=(120, 120)
-                )
-                image_label = ctk.CTkLabel(
-                    parent,
-                    image=bearlock_ctk_image,
-                    text=""
-                )
+                bearlock_ctk_image = ctk.CTkImage(light_image=bearlock_image, dark_image=bearlock_image, size=(120, 120))
+                image_label = ctk.CTkLabel(parent, image=bearlock_ctk_image, text="")
                 image_label.pack()
-            else:
-                raise FileNotFoundError("Bearlock confuse image not found")
+            else: raise FileNotFoundError("Bearlock confuse image not found")
         except Exception as e:
             print(f"Error loading bearlock-confuse.png: {e}")
-            placeholder = ctk.CTkLabel(
-                parent, text="🐻🤔", font=ctk.CTkFont(size=50), text_color="#DFCFC2"
-            )
-            placeholder.pack()
+            ctk.CTkLabel(parent, text="🐻🤔", font=ctk.CTkFont(size=50), text_color="#DFCFC2").pack()
     
     def create_asset4_image(self, parent):
-        
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             image_path = os.path.join(current_dir, "..", "..", "assets", "asset4.png")
-
-            if not os.path.exists(image_path):
-                 image_path = "./assets/asset4.png"
-
+            if not os.path.exists(image_path): image_path = "./assets/asset4.png"
             if os.path.exists(image_path):
                 asset_image = Image.open(image_path)
-                asset_ctk_image = ctk.CTkImage(
-                    light_image=asset_image,
-                    dark_image=asset_image,
-                    size=(80, 80)
-                )
-                image_label = ctk.CTkLabel(
-                    parent,
-                    image=asset_ctk_image,
-                    text=""
-                )
+                asset_ctk_image = ctk.CTkImage(light_image=asset_image, dark_image=asset_image, size=(80, 80))
+                image_label = ctk.CTkLabel(parent, image=asset_ctk_image, text="")
                 image_label.pack()
-            else:
-                raise FileNotFoundError("Asset4 image not found")
+            else: raise FileNotFoundError("Asset4 image not found")
         except Exception as e:
             print(f"Error loading asset4.png: {e}")
-            placeholder = ctk.CTkLabel(
-                parent, text="📚", font=ctk.CTkFont(size=50), text_color="#DFCFC2"
-            )
-            placeholder.pack()
+            ctk.CTkLabel(parent, text="📚", font=ctk.CTkFont(size=50), text_color="#DFCFC2").pack()
