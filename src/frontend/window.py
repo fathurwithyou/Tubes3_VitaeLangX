@@ -19,7 +19,6 @@ class VitaeLangXWindow:
         self.current_page = None 
         
         self.backend_manager = None
-        self.last_search_results_cache = None
         self.initialize_app_backend() 
         self.setup_layout() 
         
@@ -91,11 +90,7 @@ class VitaeLangXWindow:
         common_args = {"parent": self.content_frame, "navigate_callback": self.navigate_to_page, "backend_manager": self.backend_manager} #
         page_specific_args = kwargs 
         current_page_args = {**common_args, **page_specific_args} 
-        if page_name == "result":
-            if 'search_results' in current_page_args and current_page_args['search_results'] is not None:
-                self.last_search_results_cache = current_page_args['search_results']
-            elif self.last_search_results_cache is not None:
-                current_page_args['search_results'] = self.last_search_results_cache
+
         if page_name == "home":
             self.current_page = HomePage(self.content_frame, self.navigate_to_page)
         elif page_name == "about":

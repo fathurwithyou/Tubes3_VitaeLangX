@@ -149,71 +149,79 @@ promising profiles are now on your desk."""
         matches_label = ctk.CTkLabel(
             header_frame,
             text=matches_text,
-            font=ctk.CTkFont(size=14), 
-            text_color="#334D7A" 
+            font=ctk.CTkFont(size=12), # Adjusted font size
+            text_color="#334D7A" # Different color for emphasis
         )
-        matches_label.pack(side="right", anchor="e")
+        matches_label.pack(side="right", anchor="e") # Anchor to east
 
-        keywords_section_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        keywords_section_frame.pack(fill="x", pady=(5, 10))
-
-        matched_keywords_title_label = ctk.CTkLabel(
-            keywords_section_frame,
-            text="Matched keywords:",
-            font=ctk.CTkFont(size=13, weight="normal"), 
-            text_color="#1B2B4C"
-        )
-        matched_keywords_title_label.pack(anchor="w")
-
-        exact_keywords_data = result.get("matched_keywords", {})
-        if exact_keywords_data:
-            for i, (keyword, count) in enumerate(list(exact_keywords_data.items())[:3]): 
-                occurrence_text = f"{count} occurrence{'s' if count > 1 else ''}"
-                keyword_item_label = ctk.CTkLabel(
-                    keywords_section_frame,
-                    text=f"{i+1}. {keyword.capitalize()}: {occurrence_text}",
-                    font=ctk.CTkFont(size=12),
-                    text_color="#1B2B4C"
-                )
-                keyword_item_label.pack(anchor="w", padx=15)
-        else:
-            no_exact_keywords_label = ctk.CTkLabel(
-                keywords_section_frame,
-                text="No exact keywords matched.",
-                font=ctk.CTkFont(size=12),
-                text_color="#4B4B4B" 
-            )
-            no_exact_keywords_label.pack(anchor="w", padx=15)
-        
         buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", side="bottom", pady=(15,0))
+        buttons_frame.pack(fill="x", side="bottom", pady=(5,0)) # Ensure it's at the bottom
                 
         summary_button = ctk.CTkButton(
-            buttons_frame, text="Summary", font=ctk.CTkFont(size=13, weight="normal"), 
-            width=100, height=32, corner_radius=6, 
-            fg_color="#334D7A", hover_color="#273A5C", text_color="#DFCFC2", 
-            # Pass specific cv_path for summary if its content depends on specific CV
-            command=lambda app_id=result.get("applicant_id"), cv_specific_path=result.get("cv_path"): self.show_summary(app_id, cv_specific_path)
-        )
+            buttons_frame, text="Summary", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
+            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
+            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
+            command=lambda app_id=result.get("applicant_id"):
+                        (
+                    print(f"DEBUG: Summary button clicked with app_id: {app_id}"), # Tambahkan ini
+                    self.show_summary(app_id)
+                )
+            )
         summary_button.pack(side="left", expand=True, padx=(0,5))
                 
         view_cv_button = ctk.CTkButton(
-            buttons_frame, text="View CV", font=ctk.CTkFont(size=13, weight="normal"),
-            width=100, height=32, corner_radius=6,
-            fg_color="#334D7A", hover_color="#273A5C", text_color="#DFCFC2",
-            # Correctly capture and pass applicant_id AND the specific cv_path for this card
-            command=lambda app_id=result.get("applicant_id"), cv_specific_path=result.get("cv_path"): self.view_cv(app_id, cv_specific_path)
-        )
+            buttons_frame, text="View CV", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
+            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
+            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
+            command=lambda app_id=result.get("applicant_id"): (
+                    print(f"DEBUG: View CV button clicked with app_id: {app_id}"), # Tambahkan ini
+                    self.view_cv(app_id)
+                )
+            )
         view_cv_button.pack(side="right", expand=True, padx=(5,0))
 
-    # Modified show_summary to accept cv_path
-    def show_summary(self, applicant_id, cv_path=None): # Added cv_path, default to None
-        if applicant_id is None:
-            print("Error: Applicant ID is None for summary.")
-            return
-        # cv_path might be None if not all summaries are tied to a specific CV version
-        print(f"Showing summary for Applicant ID: {applicant_id}, Specific CV path: {cv_path}")
-        self.navigate_callback("summary", applicant_id=applicant_id, cv_path=cv_path)
+        keywords_outer_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+        keywords_outer_frame.pack(fill="both", expand=True, pady=(0,10))
+        
+        
+        keywords_scroll_frame = ctk.CTkScrollableFrame(keywords_outer_frame, fg_color="#F0F0F0", height=80, corner_radius=6) # Lighter background for scroll area
+        keywords_scroll_frame.pack(fill="both", expand=True, padx=2, pady=2)
+        
+        exact_keywords = result.get("matched_keywords", {})
+        if exact_keywords:
+            exact_title = ctk.CTkLabel(keywords_scroll_frame, text="Exact:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#1B2B4C")
+            exact_title.pack(anchor="w", padx=5)
+            for keyword, count in exact_keywords.items():
+                keyword_text = f"- {keyword} ({count})"
+                keyword_label = ctk.CTkLabel(keywords_scroll_frame, text=keyword_text, font=ctk.CTkFont(size=10), text_color="#1B2B4C") # Smaller font
+                keyword_label.pack(anchor="w", padx=10)
+
+        fuzzy_keywords_info = result.get("fuzzy_keywords", {})
+        if fuzzy_keywords_info:
+            fuzzy_threshold_display = "N/A" 
+            try:
+                from backend import Settings 
+                fuzzy_threshold_display = Settings.FUZZY_THRESHOLD
+            except ImportError:
+                pass # Silently fail or use a default
+
+            fuzzy_title = ctk.CTkLabel(keywords_scroll_frame, text=f"Fuzzy (> {fuzzy_threshold_display}%):", font=ctk.CTkFont(size=11, weight="bold"), text_color="#1B2B4C")
+            fuzzy_title.pack(anchor="w", pady=(5,0), padx=5)
+            for keyword, similarity in fuzzy_keywords_info.items():
+                keyword_text = f"- {keyword} (~{similarity:.0f}%)"
+                keyword_label = ctk.CTkLabel(keywords_scroll_frame, text=keyword_text, font=ctk.CTkFont(size=10), text_color="#1B2B4C") # Smaller font
+                keyword_label.pack(anchor="w", padx=10)
+
+        if not exact_keywords and not fuzzy_keywords_info:
+            no_keywords_label = ctk.CTkLabel(keywords_scroll_frame, text="No specific keywords matched.", font=ctk.CTkFont(size=10), text_color="#1B2B4C")
+            no_keywords_label.pack(anchor="center", expand=True) # Center if no keywords
+
+    def show_summary(self, applicant_id):
+            if applicant_id is None:
+                print("Error: Applicant ID is None for summary.")
+                return
+            print(f"Showing summary for Applicant ID: {applicant_id}")
+            self.navigate_callback("summary", applicant_id=applicant_id)
             
     # Modified view_cv to accept cv_path
     def view_cv(self, applicant_id, cv_path): # Added cv_path parameter
