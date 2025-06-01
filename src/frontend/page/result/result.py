@@ -5,10 +5,10 @@ import os
 
 class ResultPage(ctk.CTkFrame):
     
-    def __init__(self, parent, navigate_callback, backend_manager, search_results=None, **kwargs): # Added **kwargs
+    def __init__(self, parent, navigate_callback, backend_manager, search_results=None, **kwargs):
         super().__init__(
             parent,
-            fg_color="#1B2B4C", # Matches screenshot background
+            fg_color="#1B2B4C", 
             corner_radius=0,
             **kwargs 
         )
@@ -20,6 +20,7 @@ class ResultPage(ctk.CTkFrame):
         
         self.setup_result_page()
     
+    # ... (setup_result_page, create_back_button, create_header_section, create_results_grid remain the same as your provided code) ...
     def setup_result_page(self):
         page_main_container = ctk.CTkFrame(self, fg_color="transparent")
         page_main_container.pack(fill="both", expand=True, padx=30, pady=20)
@@ -29,7 +30,7 @@ class ResultPage(ctk.CTkFrame):
         self.create_back_button(back_button_frame)
 
         self.header_display_frame = ctk.CTkFrame(page_main_container, fg_color="transparent")
-        self.header_display_frame.pack(fill="x", pady=(0, 25)) # Increased bottom padding for header
+        self.header_display_frame.pack(fill="x", pady=(0, 25)) 
         self.create_header_section(self.header_display_frame) 
 
         self.scrollable_results_area = ctk.CTkScrollableFrame(
@@ -61,30 +62,22 @@ class ResultPage(ctk.CTkFrame):
     
     def create_header_section(self, parent): 
         header_content = ctk.CTkFrame(parent, fg_color="transparent") 
-        header_content.pack(pady=10) # Added padding around header content
-        
-        # Omitting side images (hat and book) for a cleaner look if not strictly needed
-        # or to give more space to title/subtitle if they were present in screenshot.
-        # If they are desired, uncomment their creation and packing.
-        # left_image = ctk.CTkFrame(header_content, fg_color="transparent")
-        # left_image.pack(side="left", padx=(0, 20))
-        # self.create_hat_image(left_image) #
+        header_content.pack(pady=10)
         
         center_content = ctk.CTkFrame(header_content, fg_color="transparent")
-        center_content.pack(side="left", expand=True) # Allow center content to expand
+        center_content.pack(side="left", expand=True)
         
         title_label = ctk.CTkLabel(
             center_content,
-            text="Results", # Matches screenshot
-            font=ctk.CTkFont(size=36, weight="bold"), # Slightly larger title
+            text="Results", 
+            font=ctk.CTkFont(size=36, weight="bold"), 
             text_color="#DFCFC2"
         )
-        title_label.pack(pady=(0, 8)) # Padding below title
+        title_label.pack(pady=(0, 8)) 
         
-        # Subtitle text from the screenshot
         description_text = """The search is complete! Bearlock Holmes has scanned 100 CVs in just 100 ms and uncovered
 candidates that match your clues. Whether it's an exact keyword hit or a fuzzy match, the most
-promising profiles are now on your desk.""" # Matches screenshot
+promising profiles are now on your desk."""
 
         description_label = ctk.CTkLabel(
             center_content,
@@ -92,17 +85,13 @@ promising profiles are now on your desk.""" # Matches screenshot
             font=ctk.CTkFont(size=14), 
             text_color="#FFFFFF",      
             justify="center",
-            wraplength=700 # Adjust wraplength as needed
+            wraplength=700 
         )
         description_label.pack(pady=(5, 0))
-        
-        # right_image = ctk.CTkFrame(header_content, fg_color="transparent")
-        # right_image.pack(side="right", padx=(20, 0))
-        # self.create_book_image(right_image) #
 
     def create_results_grid(self, parent_scrollable_frame): 
         results_organizer = ctk.CTkFrame(parent_scrollable_frame, fg_color="transparent")
-        results_organizer.pack(fill="x", expand=True, padx=10, pady=5) # Allow organizer to expand
+        results_organizer.pack(fill="x", expand=True, padx=10, pady=5)
 
         actual_results = self.search_results_data.get("results", [])
 
@@ -116,78 +105,69 @@ promising profiles are now on your desk.""" # Matches screenshot
             no_results_label.pack(pady=50, expand=True) 
             return
         
-        max_cols = 3 # As per screenshot
+        max_cols = 3
         
         cards_grid_container = ctk.CTkFrame(results_organizer, fg_color="transparent")
-        # Center the grid container if it doesn't fill the width
         cards_grid_container.pack(anchor="n", expand=True if len(actual_results) < max_cols else False)
-
 
         for i, result_item in enumerate(actual_results):
             if i % max_cols == 0:
                 row_frame = ctk.CTkFrame(cards_grid_container, fg_color="transparent")
-                row_frame.pack(fill="x", pady=10, anchor="n") # Increased pady for rows
-                # Configure columns for equal spacing within the row
+                row_frame.pack(fill="x", pady=10, anchor="n") 
                 for col_idx in range(max_cols):
                     row_frame.grid_columnconfigure(col_idx, weight=1)
             
-            # Card Frame
             card_frame = ctk.CTkFrame(
                 row_frame, 
-                fg_color="#DFCFC2", # Matches screenshot card background
-                corner_radius=15,  # Matches screenshot
-                width=300,         # Adjusted width
-                height=220         # Adjusted height to fit content better
+                fg_color="#DFCFC2", 
+                corner_radius=15,  
+                width=300,         
+                height=220         
             )
-            # Place card in the grid
-            card_frame.grid(row=0, column=(i % max_cols), padx=15, pady=10, sticky="n") # Added more padx/pady
+            card_frame.grid(row=0, column=(i % max_cols), padx=15, pady=10, sticky="n")
             card_frame.grid_propagate(False) 
             card_frame.pack_propagate(False) 
             
-            self.create_result_card(card_frame, result_item)
-    
-    def create_result_card(self, parent, result):
-        # Main content area within the card
+            self.create_result_card(card_frame, result_item) # Call with result_item
+
+    def create_result_card(self, parent, result): # 'result' here is result_item
         content_frame = ctk.CTkFrame(parent, fg_color="transparent")
-        content_frame.pack(fill="both", expand=True, padx=20, pady=15) # Increased padx
+        content_frame.pack(fill="both", expand=True, padx=20, pady=15)
         
-        # Header: Name and Match Count
         header_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         header_frame.pack(fill="x", pady=(0, 10))
         
         name_label = ctk.CTkLabel(
             header_frame,
             text=result.get("name", "N/A"),
-            font=ctk.CTkFont(size=18, weight="bold"), # Larger name font
-            text_color="#1B2B4C" # Dark text
+            font=ctk.CTkFont(size=18, weight="bold"), 
+            text_color="#1B2B4C" 
         )
         name_label.pack(side="left", anchor="w")
         
-        # Matches text as per screenshot "X matches"
         matches_text = f"{result.get('total_occurrences', 0)} matches"
         matches_label = ctk.CTkLabel(
             header_frame,
             text=matches_text,
-            font=ctk.CTkFont(size=14), # Adjusted size
+            font=ctk.CTkFont(size=14), 
             text_color="#334D7A" 
         )
         matches_label.pack(side="right", anchor="e")
 
-        # Matched Keywords Section
         keywords_section_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        keywords_section_frame.pack(fill="x", pady=(5, 10)) # expand=True, 
+        keywords_section_frame.pack(fill="x", pady=(5, 10))
 
         matched_keywords_title_label = ctk.CTkLabel(
             keywords_section_frame,
             text="Matched keywords:",
-            font=ctk.CTkFont(size=13, weight="normal"), # Normal weight as per screenshot
+            font=ctk.CTkFont(size=13, weight="normal"), 
             text_color="#1B2B4C"
         )
         matched_keywords_title_label.pack(anchor="w")
 
         exact_keywords_data = result.get("matched_keywords", {})
         if exact_keywords_data:
-            for i, (keyword, count) in enumerate(list(exact_keywords_data.items())[:3]): # Display up to 3 to match screenshot
+            for i, (keyword, count) in enumerate(list(exact_keywords_data.items())[:3]): 
                 occurrence_text = f"{count} occurrence{'s' if count > 1 else ''}"
                 keyword_item_label = ctk.CTkLabel(
                     keywords_section_frame,
@@ -195,25 +175,25 @@ promising profiles are now on your desk.""" # Matches screenshot
                     font=ctk.CTkFont(size=12),
                     text_color="#1B2B4C"
                 )
-                keyword_item_label.pack(anchor="w", padx=15) # Indent list items
+                keyword_item_label.pack(anchor="w", padx=15)
         else:
             no_exact_keywords_label = ctk.CTkLabel(
                 keywords_section_frame,
                 text="No exact keywords matched.",
                 font=ctk.CTkFont(size=12),
-                text_color="#4B4B4B" # Dimmer text
+                text_color="#4B4B4B" 
             )
             no_exact_keywords_label.pack(anchor="w", padx=15)
         
-        # Buttons Frame (ensure it's at the bottom)
         buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", side="bottom", pady=(15,0)) # Push to bottom, add padding above
+        buttons_frame.pack(fill="x", side="bottom", pady=(15,0))
                 
         summary_button = ctk.CTkButton(
-            buttons_frame, text="Summary", font=ctk.CTkFont(size=13, weight="normal"), # Slightly larger button font
-            width=100, height=32, corner_radius=6, # Adjusted button size
-            fg_color="#334D7A", hover_color="#273A5C", text_color="#DFCFC2", # Match screenshot style
-            command=lambda app_id=result.get("applicant_id"): self.show_summary(app_id)
+            buttons_frame, text="Summary", font=ctk.CTkFont(size=13, weight="normal"), 
+            width=100, height=32, corner_radius=6, 
+            fg_color="#334D7A", hover_color="#273A5C", text_color="#DFCFC2", 
+            # Pass specific cv_path for summary if its content depends on specific CV
+            command=lambda app_id=result.get("applicant_id"), cv_specific_path=result.get("cv_path"): self.show_summary(app_id, cv_specific_path)
         )
         summary_button.pack(side="left", expand=True, padx=(0,5))
                 
@@ -221,24 +201,35 @@ promising profiles are now on your desk.""" # Matches screenshot
             buttons_frame, text="View CV", font=ctk.CTkFont(size=13, weight="normal"),
             width=100, height=32, corner_radius=6,
             fg_color="#334D7A", hover_color="#273A5C", text_color="#DFCFC2",
-            command=lambda app_id=result.get("applicant_id"): self.view_cv(app_id, path)
+            # Correctly capture and pass applicant_id AND the specific cv_path for this card
+            command=lambda app_id=result.get("applicant_id"), cv_specific_path=result.get("cv_path"): self.view_cv(app_id, cv_specific_path)
         )
         view_cv_button.pack(side="right", expand=True, padx=(5,0))
 
-    def show_summary(self, applicant_id):
+    # Modified show_summary to accept cv_path
+    def show_summary(self, applicant_id, cv_path=None): # Added cv_path, default to None
         if applicant_id is None:
             print("Error: Applicant ID is None for summary.")
             return
-        print(f"Showing summary for Applicant ID: {applicant_id}")
-        self.navigate_callback("summary", applicant_id=applicant_id)
+        # cv_path might be None if not all summaries are tied to a specific CV version
+        print(f"Showing summary for Applicant ID: {applicant_id}, Specific CV path: {cv_path}")
+        self.navigate_callback("summary", applicant_id=applicant_id, cv_path=cv_path)
             
-    def view_cv(self, applicant_id):
+    # Modified view_cv to accept cv_path
+    def view_cv(self, applicant_id, cv_path): # Added cv_path parameter
         if applicant_id is None:
             print("Error: Applicant ID is None for CV view.")
             return
-        print(f"Viewing CV for Applicant ID: {applicant_id}")
-        self.navigate_callback("cv", applicant_id=applicant_id)
+        if cv_path is None: # Add a check for cv_path
+            print("Error: CV Path is None for CV view.")
+            # Optionally, try to fall back to applicant_id based lookup if that's desired
+            # For now, require cv_path if this method is called with it.
+            return
+        print(f"Viewing CV for Applicant ID: {applicant_id}, Path: {cv_path}")
+        # Pass cv_path to the navigation callback
+        self.navigate_callback("cv", applicant_id=applicant_id, cv_path=cv_path)
 
+    # ... (create_hat_image, create_book_image remain the same) ...
     def create_hat_image(self, parent):
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
