@@ -2,19 +2,20 @@ import os
 from backend import BackendManager, Settings
 from frontend import VitaeLangXWindow
 
-def main(): pass
-    # print("Initializing ATS Backend...")
 
-    # data_dir = os.path.join(os.path.dirname(__file__), '../data')
-    # os.makedirs(data_dir, exist_ok=True)
-    
-    # print(f"Settings.FUZZY_THRESHOLD = {Settings.FUZZY_THRESHOLD}")
-    # print(f"Type: {type(Settings.FUZZY_THRESHOLD)}")
-    # print(f"Settings.TOP_N_MATCHES = {Settings.TOP_N_MATCHES}")
-    # print(f"Type: {type(Settings.TOP_N_MATCHES)}")
+def main():
+    print("Initializing ATS Backend...")
 
-    # backend_manager = BackendManager()
-    # backend_manager.initialize_backend(data_directory=data_dir)
+    data_dir = os.path.join(os.path.dirname(__file__), '../data')
+    os.makedirs(data_dir, exist_ok=True)
+
+    print(f"Settings.FUZZY_THRESHOLD = {Settings.FUZZY_THRESHOLD}")
+    print(f"Type: {type(Settings.FUZZY_THRESHOLD)}")
+    print(f"Settings.TOP_N_MATCHES = {Settings.TOP_N_MATCHES}")
+    print(f"Type: {type(Settings.TOP_N_MATCHES)}")
+
+    backend_manager = BackendManager()
+    backend_manager.initialize_backend(data_directory=data_dir)
 
     # print("\nBackend initialized. You can now integrate with a frontend.")
     # print("Example usage (simulated from frontend interaction):")
@@ -72,30 +73,36 @@ def main(): pass
     #     if result['fuzzy_keywords']:
     #         print(
     #             f"  Fuzzy Keywords (Highest Similarity: {result['highest_fuzzy_similarity']:.2f}%): {result['fuzzy_keywords']}")
-            
-    # summary = backend_manager.get_cv_summary(2)
-    # if "error" not in summary:
-    #     print(f"Name: {summary['applicant_profile']['first_name']} {summary['applicant_profile']['last_name']}")
-    #     print(f"Birthdate: {summary['applicant_profile']['date_of_birth']}")
-    #     print(f"Address: {summary['applicant_profile']['address']}")
-    #     print(f"Phone: {summary['applicant_profile']['phone_number']}")
-    #     print(f"Skills: {', '.join(summary['extracted_info']['skills'])}")
-    #     print("Job History:")
-    #     for job in summary['extracted_info']['job_history']:
-    #         # Print job title in cyan, company in yellow, dates in magenta
-    #         print(f"\033[36m- {job['title']}\033[0m at \033[33m{job['company']}\033[0m (\033[35m{job['dates']}\033[0m)")
-    #         print(f"Description:\n{job['description']}")
-    #     print("Education:")
-    #     for edu in summary['extracted_info']['education']:
-    #         print(
-    #             f"  - {edu['degree']} from {edu['university']} ({edu['dates']})")
-    # else:
-    #     print(f"Error getting summary: {summary['error']}")
+
+    summary = backend_manager.get_cv_summary(2)
+    if "error" not in summary:
+        print(
+            f"Name: {summary['applicant_profile']['first_name']} {summary['applicant_profile']['last_name']}")
+        print(f"Birthdate: {summary['applicant_profile']['date_of_birth']}")
+        print(f"Address: {summary['applicant_profile']['address']}")
+        print(f"Phone: {summary['applicant_profile']['phone_number']}")
+        print(f"Skills: {', '.join(summary['extracted_info']['skills'])}")
+        print("Job History:")
+        for job in summary['extracted_info']['job_history']:
+            # Print job title in cyan, company in yellow, dates in magenta
+            print(
+                f"\033[36m- {job['title']}\033[0m at \033[33m{job['company']}\033[0m (\033[35m{job['dates']}\033[0m)")
+            print(f"Description:\n{job['description']}")
+        print("Education:")
+        if summary['extracted_info']['education']['entries']:
+            for edu in summary['extracted_info']['education']['entries']:
+                print(
+                    f"\033[36m- {edu['degree']}\033[0m in \033[33m{edu['field']}\033[0m from \033[35m{edu['institution']}\033[0m ({edu['dates']})")
+        else:
+            print(summary['extracted_info']['education']['full_text'])
+
+    else:
+        print(f"Error getting summary: {summary['error']}")
 
     # # print(f"\n--- Getting Raw CV Path for Applicant ID 4 ---")
     # # raw_cv_path = backend_manager.get_raw_cv_path(5)
     # # print(f"Raw CV Path: {raw_cv_path}")
-    
+
     # # print("\n--- Getting Text Content for Applicant ID 4 ---")
     # # text_content = backend_manager.get_full_cv_text(5)
     # # print(f"Text Content:\n{text_content}...")  # Print first 500 characters
@@ -107,4 +114,3 @@ def main(): pass
 if __name__ == "__main__":
     # main()
     VitaeLangXWindow().run()
-    
