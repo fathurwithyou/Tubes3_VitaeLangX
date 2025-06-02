@@ -1,6 +1,6 @@
 import os
 from backend.models import ApplicantProfile, ApplicationDetail
-from backend.database_manager import DatabaseManager
+from backend.db.database_manager import DatabaseManager
 
 
 class Seeder:

@@ -1,9 +1,8 @@
 
 import os
 import re
-from backend.database_manager import DatabaseManager
-from backend.cv_processor import CVProcessor
-from backend.regex_extractor import RegexExtractor
+from backend.db import DatabaseManager
+from backend.preprocessor import CVProcessor, RegexExtractor
 from backend.models import ApplicantProfile, ApplicationDetail
 from backend.utils.utils import Utils
 from backend.seeder import Seeder
@@ -17,7 +16,7 @@ class BackendManager:
     and regex extraction.
     """
 
-    def __init__(self, db_host='localhost', db_user='root', db_password='12345678', db_name='ats_db'):
+    def __init__(self, db_host='localhost', db_user='root', db_password='', db_name='ats_db'):
         self.db_manager = DatabaseManager(
             host=db_host, user=db_user, password=db_password, db=db_name)
         self.cv_processor = CVProcessor()

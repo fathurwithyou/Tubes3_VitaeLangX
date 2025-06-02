@@ -16,7 +16,7 @@ class RegexExtractor:
             'Certifications', 'Interests', 'Additional Information', 'Accomplishments',
             'Profile', 'Overview', 'About Me', 'Introduction', 'Technical Skills',
             'Key Skills', 'Core Competencies', 'Professional Experience',
-            'Work Experience', 'Academic Background', 'Professional Development'
+            'Work Experience', 'Academic Background', 'Professional Development', 'Education and Training',
         ]
 
         self.section_pattern = re.compile(
@@ -152,15 +152,16 @@ class RegexExtractor:
                     })
         return job_history
 
-    def extract_education(self, text: str) -> list[dict]:
+    def extract_education(self, text: str) -> dict:
         """
-        Extracts education history (e.g., dates, university, degree).
+        Extracts education history (e.g., dates, university, degree) and the full raw text of the education section.
         It first splits the text into sections and then processes the education section.
+        Returns a dictionary containing 'entries' (list of dicts) and 'full_text' (str).
         """
         sections = self._split_into_sections(text)
-
+    
         education_section_content = sections.get(
-            'Education') or sections.get('Academic Background')
+            'Education') or sections.get('Academic Background') or sections.get('Education and Training')
 
         education_entries = []
         if education_section_content:
@@ -227,4 +228,8 @@ class RegexExtractor:
                         "dates": dates,
                         "gpa": gpa
                     })
-        return education_entries
+        # print(education_section_content)
+        return {
+            "entries": education_entries,
+            "full_text": education_section_content if education_section_content else ""
+        }
