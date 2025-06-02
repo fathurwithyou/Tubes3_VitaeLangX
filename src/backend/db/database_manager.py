@@ -175,3 +175,11 @@ class DatabaseManager:
         if row:
             return ApplicantProfile(**row)
         return None
+
+    def get_total_cv_count(self) -> int:
+        """Returns the total number of CVs in the database."""
+        query = "SELECT COUNT(*) AS total FROM ApplicationDetail"
+        row = self._execute_query(query, fetch_one=True)
+        if row:
+            return row['total']
+        return 0
