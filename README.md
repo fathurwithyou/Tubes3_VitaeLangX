@@ -59,9 +59,6 @@ This project implements a backend for an Applicant Tracking System, focusing on 
     uv run main.py
     ```
 
-## Tree
-alias pytree='LC_COLLATE=C tree -I "__pycache__|*.pyc" --sort=name'
-
 ## Contributors
 
 | Nama  | NIM |
