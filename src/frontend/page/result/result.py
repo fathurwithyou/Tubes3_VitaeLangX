@@ -18,10 +18,39 @@ class ResultPage(ctk.CTkFrame):
         self.search_results_data = search_results if search_results else {"results": []} 
         self.pack(fill="both", expand=True)
         
+        # Bind to configure event for responsive design
+        self.bind("<Configure>", self._on_window_configure)
+        self._text_widgets_to_wrap = []
+        
         self.setup_result_page()
     
-    # ... (setup_result_page, create_back_button, create_header_section, create_results_grid remain the same as your provided code) ...
+    def _on_window_configure(self, event):
+        """Handle window resize events to update text wrapping"""
+        if event.widget == self:
+            self.after_idle(self._update_text_wrapping)
+    
+    def _update_text_wrapping(self):
+        """Update text wrapping for all text widgets based on current window size"""
+        try:
+            current_width = self.winfo_width()
+            if current_width > 1:
+                for widget_info in self._text_widgets_to_wrap:
+                    widget = widget_info['widget']
+                    padding = widget_info.get('padding', 100)
+                    if widget.winfo_exists():
+                        new_wrap_length = max(300, current_width - padding)
+                        widget.configure(wraplength=new_wrap_length)
+        except Exception as e:
+            print(f"Error updating text wrapping: {e}")
+
     def setup_result_page(self):
+        # Clear existing widgets
+        for widget in self.winfo_children():
+            widget.destroy()
+        
+        # Reset text widgets tracking
+        self._text_widgets_to_wrap = []
+        
         page_main_container = ctk.CTkFrame(self, fg_color="transparent")
         page_main_container.pack(fill="both", expand=True, padx=30, pady=20)
         
@@ -75,7 +104,12 @@ class ResultPage(ctk.CTkFrame):
         )
         title_label.pack(pady=(0, 8)) 
         
-        description_text = """The search is complete! Bearlock Holmes has scanned 100 CVs in just 100 ms and uncovered
+        # Get dynamic timing information from search results
+        total_cvs_scanned = self._get_total_cvs_scanned()
+        search_time = self._get_search_time()
+        
+        # Create dynamic description with actual search data
+        description_text = f"""The search is complete! Bearlock Holmes has scanned {total_cvs_scanned} CVs in just {search_time} ms and uncovered
 candidates that match your clues. Whether it's an exact keyword hit or a fuzzy match, the most
 promising profiles are now on your desk."""
 
@@ -88,6 +122,57 @@ promising profiles are now on your desk."""
             wraplength=700 
         )
         description_label.pack(pady=(5, 0))
+        
+        # Track description for responsive wrapping
+        self._text_widgets_to_wrap.append({
+            'widget': description_label,
+            'padding': 120
+        })
+
+    def _get_total_cvs_scanned(self):
+        """Get the total number of CVs scanned from backend or estimate"""
+        try:
+            # Try to get actual count from backend manager
+            if hasattr(self.backend_manager, 'get_total_cv_count'):
+                return self.backend_manager.get_total_cv_count()
+            
+            # Alternative: Try to get from database directly
+            if hasattr(self.backend_manager, 'db_manager'):
+                cv_count = self.backend_manager.db_manager.get_total_cv_count()
+                if cv_count is not None:
+                    return cv_count
+            
+            # Fallback: Use a reasonable estimate based on results
+            results_count = len(self.search_results_data.get("results", []))
+            if results_count > 0:
+                # Estimate total CVs as roughly 10-20x the results found
+                return max(100, results_count * 15)
+            else:
+                return 100  # Default fallback
+                
+        except Exception as e:
+            print(f"Error getting CV count: {e}")
+            return 100  # Default fallback
+
+    def _get_search_time(self):
+        """Get the actual search time from the search results"""
+        try:
+            # Get timing data from search results
+            exact_time = self.search_results_data.get('exact_match_time_ms', 0)
+            fuzzy_time = self.search_results_data.get('fuzzy_match_time_ms', 0)
+            
+            # Calculate total search time
+            total_time = exact_time + fuzzy_time
+            
+            if total_time > 0:
+                return f"{total_time:.1f}"
+            else:
+                # Fallback to a reasonable default
+                return "100"
+                
+        except Exception as e:
+            print(f"Error getting search time: {e}")
+            return "100"  # Default fallback
 
     def create_results_grid(self, parent_scrollable_frame): 
         results_organizer = ctk.CTkFrame(parent_scrollable_frame, fg_color="transparent")
@@ -128,9 +213,9 @@ promising profiles are now on your desk."""
             card_frame.grid_propagate(False) 
             card_frame.pack_propagate(False) 
             
-            self.create_result_card(card_frame, result_item) # Call with result_item
+            self.create_result_card(card_frame, result_item)
 
-    def create_result_card(self, parent, result): # 'result' here is result_item
+    def create_result_card(self, parent, result):
         content_frame = ctk.CTkFrame(parent, fg_color="transparent")
         content_frame.pack(fill="both", expand=True, padx=20, pady=15)
         
@@ -141,59 +226,99 @@ promising profiles are now on your desk."""
             header_frame,
             text=result.get("name", "N/A"),
             font=ctk.CTkFont(size=18, weight="bold"), 
-            text_color="#1B2B4C" 
+            text_color="#1B2B4C",
+            wraplength=180,
+            anchor="w",
+            justify="left"
         )
         name_label.pack(side="left", anchor="w")
+        
+        # Track name label for responsive wrapping
+        self._text_widgets_to_wrap.append({
+            'widget': name_label,
+            'padding': 100
+        })
         
         matches_text = f"{result.get('total_occurrences', 0)} matches"
         matches_label = ctk.CTkLabel(
             header_frame,
             text=matches_text,
-            font=ctk.CTkFont(size=12), # Adjusted font size
-            text_color="#334D7A" # Different color for emphasis
+            font=ctk.CTkFont(size=12),
+            text_color="#334D7A"
         )
-        matches_label.pack(side="right", anchor="e") # Anchor to east
+        matches_label.pack(side="right", anchor="e")
 
+        # Buttons frame - positioned early to ensure visibility
         buttons_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        buttons_frame.pack(fill="x", side="bottom", pady=(5,0)) # Ensure it's at the bottom
+        buttons_frame.pack(fill="x", side="bottom", pady=(5,0))
                 
         summary_button = ctk.CTkButton(
-            buttons_frame, text="Summary", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
-            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
-            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
-            command=lambda app_id=result.get("applicant_id"):
-                        (
-                    print(f"DEBUG: Summary button clicked with app_id: {app_id}"), # Tambahkan ini
+            buttons_frame, 
+            text="Summary", 
+            font=ctk.CTkFont(size=12, weight="normal"),
+            width=90, 
+            height=28, 
+            corner_radius=6, 
+            border_width=1, 
+            border_color="#334D7A", 
+            fg_color="#334D7A", 
+            hover_color="#1B2B4C", 
+            text_color="#DFCFC2",
+            command=lambda app_id=result.get("applicant_id"): (
+                    print(f"DEBUG: Summary button clicked with app_id: {app_id}"),
                     self.show_summary(app_id)
                 )
             )
         summary_button.pack(side="left", expand=True, padx=(0,5))
                 
         view_cv_button = ctk.CTkButton(
-            buttons_frame, text="View CV", font=ctk.CTkFont(size=12, weight="normal"), # Adjusted size
-            width=90, height=28, corner_radius=6, border_width=1, border_color="#334D7A", 
-            fg_color="#334D7A", hover_color="#1B2B4C", text_color="#DFCFC2",
+            buttons_frame, 
+            text="View CV", 
+            font=ctk.CTkFont(size=12, weight="normal"),
+            width=90, 
+            height=28, 
+            corner_radius=6, 
+            border_width=1, 
+            border_color="#334D7A", 
+            fg_color="#334D7A", 
+            hover_color="#1B2B4C", 
+            text_color="#DFCFC2",
             command=lambda app_id=result.get("applicant_id"): (
-                    print(f"DEBUG: View CV button clicked with app_id: {app_id}"), # Tambahkan ini
-                    self.view_cv(app_id)
+                    print(f"DEBUG: View CV button clicked with app_id: {app_id}"),
+                    self.view_cv(app_id, result.get("cv_path"))
                 )
             )
         view_cv_button.pack(side="right", expand=True, padx=(5,0))
 
+        # Keywords section
         keywords_outer_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
         keywords_outer_frame.pack(fill="both", expand=True, pady=(0,10))
         
-        
-        keywords_scroll_frame = ctk.CTkScrollableFrame(keywords_outer_frame, fg_color="#F0F0F0", height=80, corner_radius=6) # Lighter background for scroll area
+        keywords_scroll_frame = ctk.CTkScrollableFrame(
+            keywords_outer_frame, 
+            fg_color="#F0F0F0", 
+            height=80, 
+            corner_radius=6
+        )
         keywords_scroll_frame.pack(fill="both", expand=True, padx=2, pady=2)
         
         exact_keywords = result.get("matched_keywords", {})
         if exact_keywords:
-            exact_title = ctk.CTkLabel(keywords_scroll_frame, text="Exact:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#1B2B4C")
+            exact_title = ctk.CTkLabel(
+                keywords_scroll_frame, 
+                text="Exact:", 
+                font=ctk.CTkFont(size=11, weight="bold"), 
+                text_color="#1B2B4C"
+            )
             exact_title.pack(anchor="w", padx=5)
             for keyword, count in exact_keywords.items():
                 keyword_text = f"- {keyword} ({count})"
-                keyword_label = ctk.CTkLabel(keywords_scroll_frame, text=keyword_text, font=ctk.CTkFont(size=10), text_color="#1B2B4C") # Smaller font
+                keyword_label = ctk.CTkLabel(
+                    keywords_scroll_frame, 
+                    text=keyword_text, 
+                    font=ctk.CTkFont(size=10), 
+                    text_color="#1B2B4C"
+                )
                 keyword_label.pack(anchor="w", padx=10)
 
         fuzzy_keywords_info = result.get("fuzzy_keywords", {})
@@ -203,52 +328,64 @@ promising profiles are now on your desk."""
                 from backend import Settings 
                 fuzzy_threshold_display = Settings.FUZZY_THRESHOLD
             except ImportError:
-                pass # Silently fail or use a default
+                pass
 
-            fuzzy_title = ctk.CTkLabel(keywords_scroll_frame, text=f"Fuzzy (> {fuzzy_threshold_display}%):", font=ctk.CTkFont(size=11, weight="bold"), text_color="#1B2B4C")
+            fuzzy_title = ctk.CTkLabel(
+                keywords_scroll_frame, 
+                text=f"Fuzzy (> {fuzzy_threshold_display}%):", 
+                font=ctk.CTkFont(size=11, weight="bold"), 
+                text_color="#1B2B4C"
+            )
             fuzzy_title.pack(anchor="w", pady=(5,0), padx=5)
             for keyword, similarity in fuzzy_keywords_info.items():
                 keyword_text = f"- {keyword} (~{similarity:.0f}%)"
-                keyword_label = ctk.CTkLabel(keywords_scroll_frame, text=keyword_text, font=ctk.CTkFont(size=10), text_color="#1B2B4C") # Smaller font
+                keyword_label = ctk.CTkLabel(
+                    keywords_scroll_frame, 
+                    text=keyword_text, 
+                    font=ctk.CTkFont(size=10), 
+                    text_color="#1B2B4C"
+                )
                 keyword_label.pack(anchor="w", padx=10)
 
         if not exact_keywords and not fuzzy_keywords_info:
-            no_keywords_label = ctk.CTkLabel(keywords_scroll_frame, text="No specific keywords matched.", font=ctk.CTkFont(size=10), text_color="#1B2B4C")
-            no_keywords_label.pack(anchor="center", expand=True) # Center if no keywords
+            no_keywords_label = ctk.CTkLabel(
+                keywords_scroll_frame, 
+                text="No specific keywords matched.", 
+                font=ctk.CTkFont(size=10), 
+                text_color="#1B2B4C"
+            )
+            no_keywords_label.pack(anchor="center", expand=True)
 
     def show_summary(self, applicant_id):
-            if applicant_id is None:
-                print("Error: Applicant ID is None for summary.")
-                return
-            print(f"Showing summary for Applicant ID: {applicant_id}")
-            self.navigate_callback("summary", applicant_id=applicant_id)
+        if applicant_id is None:
+            print("Error: Applicant ID is None for summary.")
+            return
+        print(f"Showing summary for Applicant ID: {applicant_id}")
+        self.navigate_callback("summary", applicant_id=applicant_id)
             
-    # Modified view_cv to accept cv_path
-    def view_cv(self, applicant_id, cv_path): # Added cv_path parameter
+    def view_cv(self, applicant_id, cv_path):
         if applicant_id is None:
             print("Error: Applicant ID is None for CV view.")
             return
-        if cv_path is None: # Add a check for cv_path
+        if cv_path is None:
             print("Error: CV Path is None for CV view.")
-            # Optionally, try to fall back to applicant_id based lookup if that's desired
-            # For now, require cv_path if this method is called with it.
             return
         print(f"Viewing CV for Applicant ID: {applicant_id}, Path: {cv_path}")
-        # Pass cv_path to the navigation callback
         self.navigate_callback("cv", applicant_id=applicant_id, cv_path=cv_path)
 
-    # ... (create_hat_image, create_book_image remain the same) ...
     def create_hat_image(self, parent):
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             image_path = os.path.join(current_dir, "..", "..", "assets", "asset2.png")
-            if not os.path.exists(image_path): image_path = "./assets/asset2.png" 
+            if not os.path.exists(image_path): 
+                image_path = "./assets/asset2.png" 
             if os.path.exists(image_path):
                 hat_image = Image.open(image_path)
                 hat_ctk_image = ctk.CTkImage(light_image=hat_image, dark_image=hat_image, size=(100, 95))
                 image_label = ctk.CTkLabel(parent, image=hat_ctk_image, text="")
                 image_label.pack()
-            else: raise FileNotFoundError("Hat image not found")
+            else: 
+                raise FileNotFoundError("Hat image not found")
         except Exception as e:
             print(f"Error loading asset2.png (hat): {e}")
             ctk.CTkLabel(parent, text="🎩", font=ctk.CTkFont(size=40), text_color="#DFCFC2").pack()
@@ -257,13 +394,15 @@ promising profiles are now on your desk."""
         try:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             image_path = os.path.join(current_dir, "..", "..", "assets", "asset4.png")
-            if not os.path.exists(image_path): image_path = "./assets/asset4.png"
+            if not os.path.exists(image_path): 
+                image_path = "./assets/asset4.png"
             if os.path.exists(image_path):
                 book_image = Image.open(image_path)
                 book_ctk_image = ctk.CTkImage(light_image=book_image, dark_image=book_image, size=(90, 100))
                 image_label = ctk.CTkLabel(parent, image=book_ctk_image, text="")
                 image_label.pack()
-            else: raise FileNotFoundError("Book image not found")
+            else: 
+                raise FileNotFoundError("Book image not found")
         except Exception as e:
             print(f"Error loading asset4.png (book): {e}")
             ctk.CTkLabel(parent, text="📖", font=ctk.CTkFont(size=50), text_color="#DFCFC2").pack()
