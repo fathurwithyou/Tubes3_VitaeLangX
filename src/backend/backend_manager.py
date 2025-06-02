@@ -1,9 +1,8 @@
 
 import os
 import re
-from backend.database_manager import DatabaseManager
-from backend.cv_processor import CVProcessor
-from backend.regex_extractor import RegexExtractor
+from backend.db import DatabaseManager
+from backend.preprocessor import CVProcessor, RegexExtractor
 from backend.models import ApplicantProfile, ApplicationDetail
 from backend.utils.utils import Utils
 from backend.seeder import Seeder

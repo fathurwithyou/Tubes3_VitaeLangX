@@ -3,7 +3,6 @@ from PIL import Image
 import os
 
 class CreatorPage(ctk.CTkFrame):
-    
     def __init__(self, parent, navigate_callback):
         super().__init__(
             parent,
