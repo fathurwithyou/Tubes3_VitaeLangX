@@ -52,7 +52,7 @@ class ResultPage(ctk.CTkFrame):
         self._text_widgets_to_wrap = []
         
         page_main_container = ctk.CTkFrame(self, fg_color="transparent")
-        page_main_container.pack(fill="both", expand=True, padx=30, pady=20)
+        page_main_container.pack(fill="both", expand=True, padx=50, pady=30)
         
         back_button_frame = ctk.CTkFrame(page_main_container, fg_color="transparent")
         back_button_frame.pack(fill="x", pady=(0, 10)) 
@@ -72,9 +72,9 @@ class ResultPage(ctk.CTkFrame):
         
         self.create_results_grid(self.scrollable_results_area)
     
-    def create_back_button(self, parent): 
+    def create_back_button(self, parent):
         back_button = ctk.CTkButton(
-            parent, 
+            parent,
             text="←",
             font=ctk.CTkFont(size=20, weight="bold"),
             width=60,
@@ -87,7 +87,7 @@ class ResultPage(ctk.CTkFrame):
             text_color="#DFCFC2",
             command=lambda: self.navigate_callback("search")
         )
-        back_button.pack(anchor="nw")
+        back_button.pack(anchor="nw", pady=(0, 0)) 
     
     def create_header_section(self, parent): 
         header_content = ctk.CTkFrame(parent, fg_color="transparent") 

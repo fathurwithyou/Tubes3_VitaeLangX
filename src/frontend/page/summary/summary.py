@@ -162,13 +162,13 @@ class SummaryPage(ctk.CTkFrame):
             height=40,
             corner_radius=8,
             border_width=2,
-            border_color="#DFCFC2",
+            border_color="#DFCFC2", 
             fg_color="#334D7A",
-            hover_color="#1B2B4C",
+            hover_color="#1B2B4C", 
             text_color="#DFCFC2",
             command=lambda: self.navigate_callback("result")
         )
-        back_button.pack(anchor="nw", pady=(0, 15))
+        back_button.pack(anchor="nw", pady=(0, 0)) 
     
     def create_header_section(self, parent):
         header_container = ctk.CTkFrame(parent, fg_color="transparent")
