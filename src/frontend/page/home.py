@@ -32,7 +32,7 @@ class HomePage(ctk.CTkFrame):
             parent,
             text="VitaeLangX",
             font=ctk.CTkFont(size=40, weight="bold"),
-            text_color="#DFCFC2"  
+            text_color="#F9DFDC"  
         )
         title_label.pack(pady=(10, 10)) 
         
