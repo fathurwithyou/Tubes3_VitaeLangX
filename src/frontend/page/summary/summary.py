@@ -80,21 +80,28 @@ class SummaryPage(ctk.CTkFrame):
             self._display_error_message(f"No valid CV path found for applicant {self.applicant_id} for summary extraction.")
             return
 
-        # Extract text from the determined CV path
-        cv_text_to_extract = self.backend_manager.cv_processor.extract_text_from_pdf(path_used_for_extraction)
-
-        if not cv_text_to_extract or \
-           ("Could not extract text" in cv_text_to_extract and not cv_text_to_extract.strip() == "Could not extract text from CV."):
-            error_message_to_display = cv_text_to_extract if cv_text_to_extract else "CV content is empty or could not be extracted."
-            self._display_error_message(f"Failed to extract text from CV ({os.path.basename(path_used_for_extraction)}): {error_message_to_display}")
+        cv_text = self.backend_manager.cv_processor.extract_text_from_pdf(path_used_for_extraction)
+        
+        if not cv_text or not cv_text.strip():
+            self._display_error_message(f"CV content is empty or could not be extracted from {os.path.basename(path_used_for_extraction)}")
             return
+        
+        cv_text_to_extract = cv_text
 
-        # Perform regex extraction on the obtained text
-        extracted_info = {
-            "skills": self.backend_manager.regex_extractor.extract_skills(cv_text_to_extract),
-            "job_history": self.backend_manager.regex_extractor.extract_job_history(cv_text_to_extract),
-            "education": self.backend_manager.regex_extractor.extract_education(cv_text_to_extract)
-        }
+        try:
+            extracted_info = {
+                "skills": self.backend_manager.regex_extractor.extract_skills(cv_text_to_extract),
+                "job_history": self.backend_manager.regex_extractor.extract_job_history(cv_text_to_extract),
+                "education": self.backend_manager.regex_extractor.extract_education(cv_text_to_extract)
+            }
+            
+            print(f"DEBUG: Extracted job history: {extracted_info['job_history']}")
+            print(f"DEBUG: Job history type: {type(extracted_info['job_history'])}")
+            
+        except Exception as e:
+            print(f"ERROR during regex extraction: {e}")
+            self._display_error_message(f"Failed to extract information from CV: {str(e)}")
+            return
 
         self.summary_data = {
             "applicant_profile": profile_info,
@@ -347,6 +354,9 @@ assess compatibility at a glance.""",
         extracted_info = self.summary_data.get('extracted_info', {})
         job_history = extracted_info.get('job_history', [])
         
+        print(f"DEBUG: Creating job history section with data: {job_history}")
+        print(f"DEBUG: Job history type: {type(job_history)}")
+        
         job_card = ctk.CTkFrame(
             parent,
             fg_color="#DFCFC2",
@@ -369,6 +379,7 @@ assess compatibility at a glance.""",
         content_frame = ctk.CTkFrame(job_card, fg_color="transparent")
         content_frame.pack(fill="x", padx=20, pady=15)
         
+        # FIXED: Handle different job history formats
         if not job_history:
             no_history_label = ctk.CTkLabel(
                 content_frame,
@@ -379,57 +390,118 @@ assess compatibility at a glance.""",
             no_history_label.pack(anchor="w")
             return
         
-        for job in job_history:
-            job_entry_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-            job_entry_frame.pack(fill="x", pady=(0, 10))
-            
-            # Job title and company
-            job_title_text = f"{job.get('title', 'N/A')} at {job.get('company', 'N/A')}"
-            job_title_label = ctk.CTkLabel(
-                job_entry_frame,
-                text=job_title_text,
-                font=ctk.CTkFont(size=16, weight="bold"),
+        # Handle string/text format
+        if isinstance(job_history, str):
+            job_history_label = ctk.CTkLabel(
+                content_frame,
+                text=job_history,
+                font=ctk.CTkFont(size=14),
                 text_color="#1B2B4C",
                 wraplength=500,
                 anchor="w",
                 justify="left"
             )
-            job_title_label.pack(anchor="w", fill="x")
-            
-            # Track job title for responsive wrapping
+            job_history_label.pack(fill="x", padx=0, pady=0)
             self._text_widgets_to_wrap.append({
-                'widget': job_title_label,
+                'widget': job_history_label,
                 'padding': 90
             })
+            return
+        
+        # Handle tuple format (text, type_indicator)
+        if isinstance(job_history, tuple) and len(job_history) == 2:
+            job_text, format_type = job_history
+            print(f"DEBUG: Tuple format - text: {job_text}, type: {format_type}")
             
-            # Job dates
-            job_dates_label = ctk.CTkLabel(
-                job_entry_frame,
-                text=f"({job.get('dates', 'N/A')})",
+            job_history_label = ctk.CTkLabel(
+                content_frame,
+                text=str(job_text),
                 font=ctk.CTkFont(size=14),
-                text_color="#1B2B4C"
+                text_color="#1B2B4C",
+                wraplength=500,
+                anchor="w",
+                justify="left"
             )
-            job_dates_label.pack(anchor="w", pady=(2, 5))
-            
-            # Job description
-            job_description = job.get('description', 'No description provided.')
-            if job_description and job_description.strip():
-                job_desc_label = ctk.CTkLabel(
+            job_history_label.pack(fill="x", padx=0, pady=0)
+            self._text_widgets_to_wrap.append({
+                'widget': job_history_label,
+                'padding': 90
+            })
+            return
+        
+        # Handle list of dictionaries (structured data)
+        if isinstance(job_history, list) and all(isinstance(job, dict) for job in job_history):
+            for job in job_history:
+                job_entry_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
+                job_entry_frame.pack(fill="x", pady=(0, 10))
+                
+                # Job title and company
+                job_title_text = f"{job.get('title', 'N/A')} at {job.get('company', 'N/A')}"
+                job_title_label = ctk.CTkLabel(
                     job_entry_frame,
-                    text=job_description,
-                    font=ctk.CTkFont(size=14),
+                    text=job_title_text,
+                    font=ctk.CTkFont(size=16, weight="bold"),
                     text_color="#1B2B4C",
                     wraplength=500,
                     anchor="w",
                     justify="left"
                 )
-                job_desc_label.pack(anchor="w", fill="x")
+                job_title_label.pack(anchor="w", fill="x")
                 
-                # Track job description for responsive wrapping
+                # Track job title for responsive wrapping
                 self._text_widgets_to_wrap.append({
-                    'widget': job_desc_label,
+                    'widget': job_title_label,
                     'padding': 90
                 })
+                
+                # Job dates
+                job_dates_label = ctk.CTkLabel(
+                    job_entry_frame,
+                    text=f"({job.get('dates', 'N/A')})",
+                    font=ctk.CTkFont(size=14),
+                    text_color="#1B2B4C"
+                )
+                job_dates_label.pack(anchor="w", pady=(2, 5))
+                
+                # Job description
+                job_description = job.get('description', 'No description provided.')
+                if job_description and job_description.strip():
+                    job_desc_label = ctk.CTkLabel(
+                        job_entry_frame,
+                        text=job_description,
+                        font=ctk.CTkFont(size=14),
+                        text_color="#1B2B4C",
+                        wraplength=500,
+                        anchor="w",
+                        justify="left"
+                    )
+                    job_desc_label.pack(anchor="w", fill="x")
+                    
+                    # Track job description for responsive wrapping
+                    self._text_widgets_to_wrap.append({
+                        'widget': job_desc_label,
+                        'padding': 90
+                    })
+            return
+        
+        # Handle any other format - convert to string
+        fallback_text = str(job_history)
+        print(f"DEBUG: Fallback format - displaying as string: {fallback_text}")
+        
+        job_history_label = ctk.CTkLabel(
+            content_frame,
+            text=fallback_text,
+            font=ctk.CTkFont(size=14),
+            text_color="#1B2B4C",
+            wraplength=500,
+            anchor="w",
+            justify="left"
+        )
+        job_history_label.pack(fill="x", padx=0, pady=0)
+        self._text_widgets_to_wrap.append({
+            'widget': job_history_label,
+            'padding': 90
+        })
     
     def create_education_section(self, parent):
         extracted_info = self.summary_data.get('extracted_info', {})

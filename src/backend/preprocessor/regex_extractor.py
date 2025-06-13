@@ -150,7 +150,10 @@ class RegexExtractor:
                         "dates": dates,
                         "description": description
                     })
-        return job_history
+        if not job_history:
+            return experience_section_content, 'text'
+        
+        return job_history, None
 
     def extract_education(self, text: str) -> dict:
         """

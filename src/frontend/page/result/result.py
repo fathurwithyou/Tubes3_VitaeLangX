@@ -266,7 +266,7 @@ promising profiles are now on your desk."""
             text_color="#DFCFC2",
             command=lambda app_id=result.get("applicant_id"): (
                     print(f"DEBUG: Summary button clicked with app_id: {app_id}"),
-                    self.show_summary(app_id)
+                    self.show_summary(app_id, result.get("cv_path"))
                 )
             )
         summary_button.pack(side="left", expand=True, padx=(0,5))
@@ -356,12 +356,12 @@ promising profiles are now on your desk."""
             )
             no_keywords_label.pack(anchor="center", expand=True)
 
-    def show_summary(self, applicant_id):
+    def show_summary(self, applicant_id, cv_path=None):
         if applicant_id is None:
             print("Error: Applicant ID is None for summary.")
             return
         print(f"Showing summary for Applicant ID: {applicant_id}")
-        self.navigate_callback("summary", applicant_id=applicant_id)
+        self.navigate_callback("summary", applicant_id=applicant_id, cv_path=cv_path)
             
     def view_cv(self, applicant_id, cv_path):
         if applicant_id is None:
