@@ -69,7 +69,6 @@ class BackendManager:
         print(f"Loading {len(cv_paths)} CVs into memory...")
         self.in_memory_cv_texts = self.cv_processor.process_cv_for_pattern_matching(
             cv_paths)
-        print("All relevant CV data loaded into memory.")
 
     def search_cvs(self, keywords: list[str], algorithm: str, top_n_matches: int = 10, fuzzy_threshold: float = 80) -> dict:
         """
