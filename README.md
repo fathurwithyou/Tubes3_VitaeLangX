@@ -42,7 +42,7 @@ This project implements a backend for an Applicant Tracking System, focusing on 
 3.  **Install Python dependencies using `uv`:**
 
     ```bash
-    uv pip install -r requirements.txt
+    uv sync
     ```
 
 ## Building and Running the Program

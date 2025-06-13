@@ -42,7 +42,7 @@ class OpeningPage(ctk.CTkFrame):
             text_color="#DFCFC2",
             command=lambda: self.navigate_callback("home")
         )
-        back_button.pack(anchor="nw", pady=(0, 20))
+        back_button.pack(anchor="nw", pady=(0, 0)) 
     
     def create_opening_content(self, parent):
         content_frame = ctk.CTkFrame(

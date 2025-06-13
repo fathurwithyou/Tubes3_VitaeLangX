@@ -55,27 +55,26 @@ class SearchPage(ctk.CTkFrame):
         
         # Main container
         main_container = ctk.CTkFrame(self, fg_color="transparent")
-        main_container.pack(fill="both", expand=True)
+        main_container.pack(expand=True, fill="both", padx=50, pady=30)
         
         # Content container - centered
         content_container = ctk.CTkFrame(main_container, fg_color="transparent")
         content_container.place(relx=0.5, rely=0.5, anchor="center")
         
         # Create sections
-        self.create_back_button_centered(main_container)
+        self.create_back_button(main_container)
         self.create_header_section(content_container)
         self.create_search_content(content_container)
         self.create_search_button(content_container)
     
-    def create_back_button_centered(self, parent):
-        """Create enhanced back button with improved styling"""
+    def create_back_button(self, parent):
         back_button = ctk.CTkButton(
             parent,
-            text="← Back",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            width=120,
-            height=45,
-            corner_radius=12,
+            text="←",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            width=60,
+            height=40,
+            corner_radius=8,
             border_width=2,
             border_color="#DFCFC2", 
             fg_color="#334D7A",
@@ -83,7 +82,7 @@ class SearchPage(ctk.CTkFrame):
             text_color="#DFCFC2",
             command=lambda: self.navigate_callback("opening")
         )
-        back_button.place(x=40, y=30)
+        back_button.pack(anchor="nw", pady=(0, 0)) 
     
     def create_header_section(self, parent):
         """Create enhanced header with responsive layout"""
@@ -208,8 +207,8 @@ system reveal the most relevant candidates, exact or approximate."""
             values=self.algorithm_options,
             font=ctk.CTkFont(size=14, weight="normal"),
             height=45,
-            selected_color="#334D7A",
-            selected_hover_color="#273A5C",
+            selected_color="#DFCFC2",
+            selected_hover_color="#DEC5B1",
             unselected_color="#FFFFFF",
             unselected_hover_color="#F5F5F5",
             text_color="#1B2B4C",
@@ -304,13 +303,14 @@ system reveal the most relevant candidates, exact or approximate."""
         search_button = ctk.CTkButton(
             button_container,
             text="🔍 Search Now",
-            font=ctk.CTkFont(size=18, weight="bold"),
-            width=250,
-            height=50,
-            corner_radius=15,
-            border_width=0,
+            font=ctk.CTkFont(size=16, weight="normal"),
+            width=200,
+            height=45,
+            corner_radius=8,
+            border_width=2,
+            border_color="#DFCFC2", 
             fg_color="#334D7A",
-            hover_color="#273A5C",
+            hover_color="#1B2B4C", 
             text_color="#DFCFC2",
             command=self.perform_search
         )

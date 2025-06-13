@@ -287,7 +287,7 @@ no great candidate goes unnoticed in your talent search."""
             parent,
             fg_color="#1B2B4C",
             width=240,
-            height=180,
+            height=200,
             corner_radius=18,
             border_width=3,
             border_color=algo_data["color"]
