@@ -94,6 +94,10 @@ class Seeder:
             print(
                 f"Processing role: '{application_role_candidate}' from directory: '{norm_root}'")
 
+            # take 20 first of data/{category}
+            print(files)
+            files = sorted(files)[:20]
+            
             for file_name in files:
                 if file_name.lower().endswith('.pdf'):
 
