@@ -1,5 +1,6 @@
 import pymysql.cursors
 from backend.models import ApplicantProfile, ApplicationDetail
+from backend.encryption import VigenereCipher
 import datetime
 import os
 
@@ -9,12 +10,13 @@ class DatabaseManager:
     Manages connections and operations for the MySQL database.
     """
 
-    def __init__(self, host='localhost', user='root', password='12345678', db='ats_db'):
+    def __init__(self, host='localhost', user='root', password='', db='ats_db'):
         self.connection = None
         self.host = host
         self.user = user
         self.password = password
         self.db = db
+        self.encryptor = VigenereCipher(key="i-see-the-key")
 
     def connect(self):
         """
@@ -146,8 +148,13 @@ class DatabaseManager:
         INSERT INTO ApplicantProfile (first_name, last_name, date_of_birth, address, phone_number)
         VALUES (%s, %s, %s, %s, %s)
         """
+        profile.first_name = self.encryptor.encrypt(profile.first_name)
+        profile.last_name = self.encryptor.encrypt(profile.last_name)
+        profile.address = self.encryptor.encrypt(profile.address)
+        profile.phone_number = self.encryptor.encrypt(profile.phone_number)
         params = (profile.first_name, profile.last_name, profile.date_of_birth,
                   profile.address, profile.phone_number)
+
         return self._execute_query(query, params, commit=True)
 
     def insert_application_detail(self, detail: ApplicationDetail) -> int:
@@ -161,7 +168,7 @@ class DatabaseManager:
 
     def get_all_application_details(self) -> list[ApplicationDetail]:
         """Retrieves all application details."""
-        query = "SELECT * FROM ApplicationDetail LIMIT 11"
+        query = "SELECT * FROM ApplicationDetail"
         rows = self._execute_query(query, fetch_all=True)
         if rows:
             return [ApplicationDetail(**row) for row in rows]

@@ -3,7 +3,7 @@ from backend import *
 if __name__ == '__main__':
 
     db_manager = DatabaseManager(
-        host='localhost', user='root', password='12345678', db='ats_db')
+        host='localhost', user='root', password='', db='ats_db')
     db_manager.connect()
 
     db_manager.create_tables()

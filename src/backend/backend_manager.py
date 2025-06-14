@@ -319,7 +319,15 @@ class BackendManager:
             "SELECT * FROM ApplicantProfile WHERE applicant_id = %s",
             (applicant_id,), fetch_one=True
         )       
-             
+        # decrypting the profile details
+        application_details_row['first_name'] = self.db_manager.encryptor.decrypt(
+            profile.first_name)
+        application_details_row['last_name'] = self.db_manager.encryptor.decrypt(
+            profile.last_name)
+        application_details_row['address'] = self.db_manager.encryptor.decrypt(
+            profile.address)
+        application_details_row['phone_number'] = self.db_manager.encryptor.decrypt(
+            profile.phone_number)
         application_details_row['date_of_birth'] = str(application_details_row['date_of_birth']) if application_details_row['date_of_birth'] else "N/A" 
         
         if not application_details_row:

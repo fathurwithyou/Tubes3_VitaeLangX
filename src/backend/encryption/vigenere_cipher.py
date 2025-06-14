@@ -1,4 +1,3 @@
-import os 
 
 class VigenereCipher:
     """
@@ -7,13 +6,14 @@ class VigenereCipher:
     """
     PRINTABLE_ASCII_START = 32
     PRINTABLE_ASCII_END = 126
-    PRINTABLE_ASCII_RANGE_SIZE = PRINTABLE_ASCII_END - PRINTABLE_ASCII_START + 1 
+    PRINTABLE_ASCII_RANGE_SIZE = PRINTABLE_ASCII_END - PRINTABLE_ASCII_START + 1
 
-    def __init__(self):
+    def __init__(self, key: str = "i-see-the-key"):
         """
         Initializes the SimpleVigenereCipher.
         No specific state is stored in this simple version.
         """
+        self.key = key
         pass
 
     def _process_text(self, input_text: str, key: str, encrypt_mode: bool) -> str:
@@ -29,7 +29,7 @@ class VigenereCipher:
             str: The processed text (cipher text or plain text).
         """
         if not key:
-            
+
             return input_text
 
         processed_chars = []
@@ -41,31 +41,30 @@ class VigenereCipher:
             text_ord = ord(text_char_code)
             key_ord = ord(key_char)
 
-            
             if (self.PRINTABLE_ASCII_START <= text_ord <= self.PRINTABLE_ASCII_END and
                     self.PRINTABLE_ASCII_START <= key_ord <= self.PRINTABLE_ASCII_END):
 
-                
                 shift_amount = key_ord - self.PRINTABLE_ASCII_START
-                
+
                 normalized_text_ord = text_ord - self.PRINTABLE_ASCII_START
 
                 if encrypt_mode:
-                    processed_val = (normalized_text_ord + shift_amount) % self.PRINTABLE_ASCII_RANGE_SIZE
-                else: 
-                   
-                    processed_val = (normalized_text_ord - shift_amount + self.PRINTABLE_ASCII_RANGE_SIZE) % self.PRINTABLE_ASCII_RANGE_SIZE
-                
-               
+                    processed_val = (
+                        normalized_text_ord + shift_amount) % self.PRINTABLE_ASCII_RANGE_SIZE
+                else:
+
+                    processed_val = (normalized_text_ord - shift_amount +
+                                     self.PRINTABLE_ASCII_RANGE_SIZE) % self.PRINTABLE_ASCII_RANGE_SIZE
+
                 final_processed_ord = processed_val + self.PRINTABLE_ASCII_START
                 processed_chars.append(chr(final_processed_ord))
             else:
-                
+
                 processed_chars.append(text_char_code)
 
         return "".join(processed_chars)
 
-    def encrypt(self, plain_text: str, key: str) -> str:
+    def encrypt(self, plain_text: str) -> str:
         """
         Encrypts the plain_text using a Vigenère-like method with the given key.
 
@@ -76,12 +75,12 @@ class VigenereCipher:
         Returns:
             str: The encrypted text (ciphertext).
         """
-        print(f"Encrypting text...")
-        encrypted_text = self._process_text(plain_text, key, True)
+        print("Encrypting text...")
+        encrypted_text = self._process_text(plain_text, self.key, True)
         print("Encryption complete.")
         return encrypted_text
 
-    def decrypt(self, cipher_text: str, key: str) -> str:
+    def decrypt(self, cipher_text: str) -> str:
         """
         Decrypts the cipher_text using a Vigenère-like method with the given key.
 
@@ -92,7 +91,7 @@ class VigenereCipher:
         Returns:
             str: The decrypted text (original plain_text).
         """
-        print(f"Decrypting text...")
-        decrypted_text = self._process_text(cipher_text, key, False)
+        print("Decrypting text...")
+        decrypted_text = self._process_text(cipher_text, self.key, False)
         print("Decryption complete.")
         return decrypted_text
