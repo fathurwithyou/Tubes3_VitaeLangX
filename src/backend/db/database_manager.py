@@ -171,6 +171,8 @@ class DatabaseManager:
         query = "SELECT * FROM ApplicationDetail"
         rows = self._execute_query(query, fetch_all=True)
         if rows:
+            for row in rows:
+                row['cv_path'] = os.path.join('..', row['cv_path'])
             return [ApplicationDetail(**row) for row in rows]
         return []
 
