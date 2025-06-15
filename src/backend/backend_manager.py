@@ -166,12 +166,14 @@ class BackendManager:
         if unmatched_keywords and fuzzy_threshold is not None:
             for cv_path, text in self.in_memory_cv_texts.items():
                 cv_fuzzy_keywords = {}
+                similarity_counter = 0
                 highest_cv_similarity = 0.0
                 current_cv_loop_fuzzy_time = 0
 
                 cv_words = re.findall(r'\b\w+\b', text.lower())
 
                 for um_keyword in unmatched_keywords:
+                    counter = 0
                     best_similarity_for_keyword = 0.0
                     for cv_word in cv_words:
 
@@ -179,19 +181,25 @@ class BackendManager:
                             self.search_service.get_similarity_percentage,
                             um_keyword.lower(), cv_word
                         )
+                        
+                        if similarity_score >= fuzzy_threshold:
+                            similarity_counter += 1
+                            counter += 1
+                        
                         current_cv_loop_fuzzy_time += time_taken
                         if similarity_score >= fuzzy_threshold and similarity_score > best_similarity_for_keyword:
                             best_similarity_for_keyword = similarity_score
 
                     if best_similarity_for_keyword > 0:
-                        cv_fuzzy_keywords[um_keyword] = best_similarity_for_keyword
+                        cv_fuzzy_keywords[um_keyword] = (best_similarity_for_keyword, counter)
                         if best_similarity_for_keyword > highest_cv_similarity:
                             highest_cv_similarity = best_similarity_for_keyword
 
                 if highest_cv_similarity > 0:
                     fuzzy_matches[cv_path] = {
                         'fuzzy_matched_keywords': cv_fuzzy_keywords,
-                        'highest_similarity': highest_cv_similarity
+                        'highest_similarity': highest_cv_similarity,
+                        'total_occurrences': similarity_counter
                     }
                 total_fuzzy_match_time_ms += current_cv_loop_fuzzy_time
 
@@ -214,12 +222,15 @@ class BackendManager:
                         'matched_keywords': details['matched_keywords'],
                         'total_occurrences': details['total_occurrences'],
                         'fuzzy_keywords': {},
-                        'highest_fuzzy_similarity': 0.0
+                        'highest_fuzzy_similarity': 0.0,
                     })
                     processed_cv_paths.add(cv_path)
 
-        sorted_fuzzy_matches = sorted(fuzzy_matches.items(),
-                                      key=lambda item: item[1]['highest_similarity'], reverse=True)
+        sorted_fuzzy_matches = sorted(
+            fuzzy_matches.items(),
+            key=lambda item: (item[1]['total_occurrences'], item[1]['highest_similarity']),
+            reverse=True
+        )
 
         for cv_path, details in sorted_fuzzy_matches:
             if cv_path not in processed_cv_paths:
@@ -235,9 +246,9 @@ class BackendManager:
                             'name': f"{profile.first_name} {profile.last_name}".strip(),
                             'cv_path': cv_path,
                             'matched_keywords': {},
-                            'total_occurrences': 0,
                             'fuzzy_keywords': details['fuzzy_matched_keywords'],
-                            'highest_fuzzy_similarity': details['highest_similarity']
+                            'highest_fuzzy_similarity': details['highest_similarity'],
+                            'total_occurrences': details['total_occurrences']
                         })
                         processed_cv_paths.add(cv_path)
 

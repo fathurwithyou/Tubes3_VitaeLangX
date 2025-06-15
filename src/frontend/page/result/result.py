@@ -332,13 +332,17 @@ promising profiles are now on your desk."""
 
             fuzzy_title = ctk.CTkLabel(
                 keywords_scroll_frame, 
-                text=f"Fuzzy (> {fuzzy_threshold_display}%):", 
+                text=f"Fuzzy (>= {fuzzy_threshold_display}%):", 
                 font=ctk.CTkFont(size=11, weight="bold"), 
                 text_color="#1B2B4C"
             )
             fuzzy_title.pack(anchor="w", pady=(5,0), padx=5)
-            for keyword, similarity in fuzzy_keywords_info.items():
-                keyword_text = f"- {keyword} (~{similarity:.0f}%)"
+            for keyword, value in fuzzy_keywords_info.items():
+                if isinstance(value, (tuple, list)) and len(value) == 2:
+                    similarity, total_occurrences = value
+                else:
+                    similarity, total_occurrences = 0, 0
+                keyword_text = f"- {keyword} (~{similarity:.0f}%) - ({total_occurrences})"
                 keyword_label = ctk.CTkLabel(
                     keywords_scroll_frame, 
                     text=keyword_text, 
