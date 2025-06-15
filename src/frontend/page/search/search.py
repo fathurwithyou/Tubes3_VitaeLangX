@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from PIL import Image
 import os
+import re
 from backend import Settings
 
 class SearchPage(ctk.CTkFrame):
@@ -412,8 +413,7 @@ system reveal the most relevant candidates, exact or approximate."""
             # Could add a visual feedback here
             return
         
-        # Parse keywords
-        keywords_list = [k.strip() for k in keywords_str.split(',') if k.strip()]
+        keywords_list = [k.strip() for k in re.split(r',[\s]+', keywords_str) if k.strip()]
         if not keywords_list:
             print("No valid keywords found.")
             return
