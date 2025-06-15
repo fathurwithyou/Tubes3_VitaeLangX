@@ -206,10 +206,6 @@ class BackendManager:
             if app_detail:
                 profile = self.db_manager.get_applicant_profile_by_id(
                     app_detail.applicant_id)
-                profile.first_name = self.db_manager.encryptor.decrypt(
-                    profile.first_name)
-                profile.last_name = self.db_manager.encryptor.decrypt(
-                    profile.last_name)
                 if profile:
                     results.append({
                         'applicant_id': profile.applicant_id,

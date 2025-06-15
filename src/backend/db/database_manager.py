@@ -17,6 +17,7 @@ class DatabaseManager:
         self.password = password
         self.db = db
         self.encryptor = VigenereCipher(key="i-see-the-key")
+        self.sensitive_data = ['first_name', 'last_name', 'address', 'phone_number']
 
     def connect(self):
         """
@@ -181,6 +182,9 @@ class DatabaseManager:
         query = "SELECT * FROM ApplicantProfile WHERE applicant_id = %s"
         params = (applicant_id,)
         row = self._execute_query(query, params, fetch_one=True)
+        for field in self.sensitive_data:
+            if row and field in row:
+                row[field] = self.encryptor.decrypt(row[field])
         if row:
             return ApplicantProfile(**row)
         return None
