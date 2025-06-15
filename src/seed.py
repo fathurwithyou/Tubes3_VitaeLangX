@@ -7,19 +7,19 @@ if __name__ == "__main__":
 
     try:
         db_manager.connect()
-        print("✓ Connected to database")
+        print("Connected to database")
 
         db_manager.create_tables()
-        print("✓ Tables created/verified")
+        print("Tables created/verified")
 
         seeder = Seeder(db_manager, "i-see-the-key")
 
         sql_file = "../seeds/tubes3_seeding.sql"
         seeder.seed_database(sql_file)
 
-        print("✓ Seeding and encryption process completed successfully")
+        print("Seeding and encryption process completed successfully")
         
         seeder.decrypt_and_view_data('ApplicantProfile')
 
     except Exception as e:
-        print(f"✗ Error: {e}")
+        print(f"Error: {e}")

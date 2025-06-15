@@ -3,7 +3,6 @@ import os
 import re
 from backend.db import DatabaseManager
 from backend.preprocessor import CVProcessor, RegexExtractor
-from backend.models import ApplicantProfile, ApplicationDetail
 from backend.utils.utils import Utils
 from backend.seeder import Seeder
 from backend.services import SearchService

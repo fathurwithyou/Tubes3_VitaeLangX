@@ -31,11 +31,11 @@ class Seeder:
             print("Step 2: Retrieving data for encryption...")
             self._encrypt_existing_data()
 
-            print("✓ Database seeded and encrypted successfully!")
+            print("Database seeded and encrypted successfully!")
 
         except Exception as e:
             self.logger.error(f"Error in seed_database: {e}")
-            print(f"✗ Error: {e}")
+            print(f"Error: {e}")
             if self.db_manager.connection:
                 self.db_manager.connection.rollback()
 
@@ -61,7 +61,7 @@ class Seeder:
                 print(f"Error executing statement: {str(e)}")
                 continue
 
-        print(f"✓ Executed {len(sql_statements)} SQL statements")
+        print(f"Executed {len(sql_statements)} SQL statements")
 
     def _encrypt_existing_data(self):
         """
@@ -97,7 +97,7 @@ class Seeder:
                                 str(value))
                             encrypted_data[column] = encrypted_value
                             print(
-                                f"  ✓ Encrypted {column} for applicant_id {record_dict.get('applicant_id')}"
+                                f"  Encrypted {column} for applicant_id {record_dict.get('applicant_id')}"
                             )
                         else:
                             encrypted_data[column] = value
@@ -114,7 +114,7 @@ class Seeder:
                     continue
 
             self.db_manager.connection.commit()
-            print("✓ ApplicantProfile encryption completed successfully")
+            print("ApplicantProfile encryption completed successfully")
             print("Note: ApplicationDetail table is left unencrypted as requested")
 
         except Exception as e:
@@ -142,7 +142,7 @@ class Seeder:
             set_clauses = []
             values = []
 
-            id_column = 'applicant_id' 
+            id_column = "applicant_id"
 
             for column, value in data.items():
                 if column != id_column:
@@ -184,11 +184,11 @@ class Seeder:
 
             self._encrypt_existing_data()
 
-            print("✓ Database re-encrypted with new key")
+            print("Database re-encrypted with new key")
 
         except Exception as e:
             self.logger.error(f"Error encrypting database: {e}")
-            print(f"✗ Error encrypting database: {e}")
+            print(f"Error encrypting database: {e}")
 
     def decrypt_and_view_data(self, table_name: str = "ApplicantProfile"):
         """
