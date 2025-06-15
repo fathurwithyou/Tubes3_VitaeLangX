@@ -1,139 +1,227 @@
 import os
-from backend.models import ApplicantProfile, ApplicationDetail
+import logging
 from backend.db.database_manager import DatabaseManager
+from backend.encryption import VigenereCipher
 
 
 class Seeder:
     """
-    Handles scanning the data directory for CV files and seeding
-    the ApplicationDetail table. It uses a single common ApplicantProfile
-    for all entries and infers application_role from the directory structure.
+    Seeder class to populate the database with initial data.
     """
 
-    def __init__(self, db_manager: DatabaseManager):
+    def __init__(
+        self, db_manager: DatabaseManager, encryption_key: str = "i-see-the-key"
+    ):
         self.db_manager = db_manager
         self.common_applicant_id = None
+        self.encryption = VigenereCipher(encryption_key)
+        self.logger = logging.getLogger(__name__)
 
-    def _ensure_common_applicant_profile(self):
+    def seed_database(self, sql_file: str):
         """
-        Ensures that a common applicant profile exists for this seeding session
-        and its ID is available in self.common_applicant_id.
-        If not already set in this session, it creates a new "Default Applicant".
-        Note: For true idempotency across multiple script runs (not just sessions),
-        a check for an existing "Default Applicant" by name in the DB would be needed
-        (e.g., using a db_manager.get_applicant_profile_by_name method).
-        """
-        if self.common_applicant_id is None:
-
-            common_profile = ApplicantProfile(
-                first_name="Default",
-                last_name="Applicant",
-                date_of_birth="2000-01-01",  
-                address="123 Default St, Default City, DC 12345",
-                phone_number="+1234567890"  
-            )
-
-            applicant_id = self.db_manager.insert_applicant_profile(
-                common_profile)
-
-            if applicant_id:
-                self.common_applicant_id = applicant_id
-                print(
-                    f"Established common applicant profile: ID {self.common_applicant_id} (Name: Default Applicant)")
-            else:
-                error_msg = "Error: Could not create common applicant profile."
-                print(error_msg)
-                raise Exception(error_msg)
-        return self.common_applicant_id
-
-    def seed_application_details_from_paths(self, data_directory: str):
-        """
-        Scans the specified data_directory for PDF CV files,
-        and inserts their paths into the ApplicationDetail table.
-        Uses a common applicant_id and infers application_role from folder names.
+        Seeds the database with the SQL file, then encrypts sensitive data.
 
         Args:
-            data_directory (str): The root directory containing category folders (e.g., '../data/').
+            sql_file (str): Path to the SQL file containing seed data
         """
-        print(
-            f"Starting seeding of ApplicationDetail table from paths in '{data_directory}'...")
-
         try:
-            self._ensure_common_applicant_profile()
-            if not self.common_applicant_id:
-                print(
-                    "Aborting seeding: Common applicant profile ID could not be established.")
-                return
+            print("Step 1: Inserting original data...")
+            self._execute_sql_file(sql_file)
+
+            print("Step 2: Retrieving data for encryption...")
+            self._encrypt_existing_data()
+
+            print("✓ Database seeded and encrypted successfully!")
+
         except Exception as e:
-            print(f"Error during common profile setup: {e}. Aborting seeding.")
-            return
+            self.logger.error(f"Error in seed_database: {e}")
+            print(f"✗ Error: {e}")
+            if self.db_manager.connection:
+                self.db_manager.connection.rollback()
 
-        processed_cv_paths = set()
+    def _execute_sql_file(self, sql_file: str):
+        """
+        Execute SQL file normally without encryption using DatabaseManager's method.
+        """
+        if not os.path.exists(sql_file):
+            raise FileNotFoundError(f"SQL file not found: {sql_file}")
 
-        existing_details = self.db_manager.get_all_application_details()
-        for detail in existing_details:
-            if detail.cv_path:
-                processed_cv_paths.add(os.path.normpath(detail.cv_path))
+        with open(sql_file, "r", encoding="utf-8") as file:
+            sql_content = file.read()
 
-        for root, dirs, files in os.walk(data_directory):
-            norm_root = os.path.normpath(root)
-            norm_data_directory = os.path.normpath(data_directory)
+        sql_statements = [
+            stmt.strip() for stmt in sql_content.split(";") if stmt.strip()
+        ]
 
-            application_role_candidate = os.path.basename(norm_root)
-
-            if norm_root == norm_data_directory:
-                print(
-                    f"Scanning root data directory: {norm_root}. Subdirectories will be processed for roles.")
+        for statement in sql_statements:
+            try:
+                self.db_manager._execute_query(statement, commit=True)
+            except Exception as e:
+                self.logger.error(f"Error executing SQL: {str(e)}")
+                print(f"Error executing statement: {str(e)}")
                 continue
 
-            if not application_role_candidate:
-                print(
-                    f"  Skipping directory with empty role name in '{norm_root}'")
-                continue
+        print(f"✓ Executed {len(sql_statements)} SQL statements")
+
+    def _encrypt_existing_data(self):
+        """
+        Take all data from ApplicantProfile table, encrypt sensitive fields, then update back.
+        """
+        try:
+            print("Encrypting ApplicantProfile data...")
+
+            query = "SELECT * FROM ApplicantProfile"
+            records = self.db_manager._execute_query(query, fetch_all=True)
+
+            if not records:
+                print("No records found in ApplicantProfile table")
+                return
 
             print(
-                f"Processing role: '{application_role_candidate}' from directory: '{norm_root}'")
+                f"Found {len(records)} records to encrypt in ApplicantProfile")
+            print(
+                f"Sample record structure: {list(records[0].keys()) if records else 'No records'}"
+            )
 
-            # take 20 first of data/{category}
-            print(files)
-            files = sorted(files)[:20]
-            
-            for file_name in files:
-                if file_name.lower().endswith('.pdf'):
-
-                    cv_path_full = os.path.abspath(
-                        os.path.join(norm_root, file_name))
-
-                    cv_path_norm = os.path.normpath(cv_path_full)
-
-                    if cv_path_norm in processed_cv_paths:
-                        print(
-                            f"  Skipping '{file_name}': Already seeded (Path: {cv_path_norm}).")
-                        continue
-
-                    if not os.path.exists(cv_path_full):
-                        print(
-                            f"  Warning: File '{file_name}' listed by os.walk but not found at '{cv_path_full}'. Skipping.")
-                        continue
-
+            for i, record_dict in enumerate(records, 1):
+                try:
                     print(
-                        f"  Attempting to seed ApplicationDetail for: {file_name}")
-
-                    app_detail = ApplicationDetail(
-                        applicant_id=self.common_applicant_id,
-                        application_role=application_role_candidate,
-                        cv_path=cv_path_full
+                        f"Processing record {i}/{len(records)} - applicant_id: {record_dict.get('applicant_id')}"
                     )
 
-                    inserted_detail_id = self.db_manager.insert_application_detail(
-                        app_detail)
+                    encrypted_data = {}
+                    for column, value in record_dict.items():
+                        if self._is_sensitive_field(column) and value:
+                            print(f"  Encrypting {column}: '{value}'")
+                            encrypted_value = self.encryption.encrypt(
+                                str(value))
+                            encrypted_data[column] = encrypted_value
+                            print(
+                                f"  ✓ Encrypted {column} for applicant_id {record_dict.get('applicant_id')}"
+                            )
+                        else:
+                            encrypted_data[column] = value
 
-                    if inserted_detail_id:
-                        print(
-                            f"    Successfully seeded ApplicationDetail for '{file_name}' (Role: {application_role_candidate}, ApplicantID: {self.common_applicant_id}, DetailID: {inserted_detail_id})")
-                        processed_cv_paths.add(cv_path_norm)
+                    self._update_record_dict(
+                        "ApplicantProfile", encrypted_data, record_dict["applicant_id"]
+                    )
+
+                except Exception as record_error:
+                    print(f"Error processing record {i}: {str(record_error)}")
+                    self.logger.error(
+                        f"Error processing record {i}: {str(record_error)}"
+                    )
+                    continue
+
+            self.db_manager.connection.commit()
+            print("✓ ApplicantProfile encryption completed successfully")
+            print("Note: ApplicationDetail table is left unencrypted as requested")
+
+        except Exception as e:
+            print(f"Error encrypting data: {str(e)}")
+            self.logger.error(f"Error encrypting data: {str(e)}")
+            if self.db_manager.connection:
+                self.db_manager.connection.rollback()
+            raise
+
+    def _is_sensitive_field(self, column_name: str) -> bool:
+        """
+        Check if a column contains sensitive data that should be encrypted.
+        For ApplicantProfile: encrypt all fields except applicant_id and date_of_birth
+        """
+
+        sensitive_fields = ["first_name",
+                            "last_name", "address", "phone_number"]
+        return column_name.lower() in sensitive_fields
+
+    def _update_record_dict(self, table_name: str, data: dict, record_id):
+        """
+        Update a specific record with encrypted data using DatabaseManager's method.
+        """
+        try:
+            set_clauses = []
+            values = []
+
+            id_column = 'applicant_id' 
+
+            for column, value in data.items():
+                if column != id_column:
+                    set_clauses.append(f"{column} = %s")
+                    values.append(value)
+
+            if not set_clauses:
+                print(f"No fields to update for record {record_id}")
+                return
+
+            values.append(record_id)
+
+            update_query = f"UPDATE {table_name} SET {', '.join(set_clauses)} WHERE {id_column} = %s"
+            print(f"  Executing update for {id_column} = {record_id}")
+
+            result = self.db_manager._execute_query(
+                update_query, tuple(values), commit=True
+            )
+
+            if result is not None:
+                print(f"  Successfully updated record {record_id}")
+            else:
+                print(f"  Failed to update record {record_id}")
+
+        except Exception as e:
+            print(f"Error updating record {record_id}: {str(e)}")
+            self.logger.error(f"Error updating record {record_id}: {str(e)}")
+            raise
+
+    def encrypt_database(self, key: str):
+        """
+        Encrypts the database using the provided key.
+        Updates the encryption key and re-encrypts all data.
+        """
+        try:
+            print("Updating encryption key and re-encrypting data...")
+
+            self.encryption = VigenereCipher(key)
+
+            self._encrypt_existing_data()
+
+            print("✓ Database re-encrypted with new key")
+
+        except Exception as e:
+            self.logger.error(f"Error encrypting database: {e}")
+            print(f"✗ Error encrypting database: {e}")
+
+    def decrypt_and_view_data(self, table_name: str = "ApplicantProfile"):
+        """
+        Decrypt and display data for verification.
+        """
+        try:
+            query = f"SELECT * FROM {table_name} LIMIT 5"
+            records = self.db_manager._execute_query(query, fetch_all=True)
+
+            if not records:
+                print(f"No records found in {table_name} table")
+                return
+
+            for record_dict in records:
+                id_column = (
+                    "applicant_id" if table_name == "ApplicantProfile" else "detail_id"
+                )
+                print(f"\nRecord {id_column}: {record_dict.get(id_column)}")
+
+                for column, value in record_dict.items():
+                    if self._is_sensitive_field(column) and value:
+                        try:
+                            decrypted_value = self.encryption.decrypt(
+                                str(value))
+                            print(
+                                f"  {column}: '{decrypted_value}' (decrypted)")
+                        except Exception as decrypt_error:
+                            print(
+                                f"  {column}: '{value}' (failed to decrypt: {decrypt_error})"
+                            )
                     else:
-                        print(
-                            f"    Failed to insert ApplicationDetail for '{file_name}'.")
+                        print(f"  {column}: {value}")
 
-        print("ApplicationDetail seeding from paths complete.")
+        except Exception as e:
+            print(f"Error viewing data: {str(e)}")
+            self.logger.error(f"Error viewing data: {str(e)}")
